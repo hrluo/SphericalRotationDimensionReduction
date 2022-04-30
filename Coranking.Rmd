@@ -1,0 +1,1832 @@
+---
+title: "SRCA Coranking"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Coranking matrix
+
+Coranking matrix for six algorithms: PCA, SRCA, SPCA, LLE, tSNE, UMAP
+
+```{r cars}
+library(dimRed)
+library(coRanking)
+library(rdist)
+Q_local = function(QNX, kmax){
+  Q = 0 
+  for (i in 1:kmax){
+    Q = Q + QNX[i]
+  } 
+  Q = Q/kmax
+  return(Q)
+}
+
+Q_global = function(QNX,kmax){
+  Q = 0
+  n = length(QNX)-1
+  for (i in kmax:(n-1)){
+    Q = Q + QNX[i]
+  }
+  Q = Q/(n-kmax)
+  return(Q)
+}
+
+```
+
+
+
+## Banknote
+```{r cars}
+
+setwd("~/Documents/GitHub/SPCA/code_method_Final/SRCA/Banknote")
+data <- read.csv('Banknote.csv')
+data = data[,2:5]
+output_PCA = read.csv('Banknote_output_PCA.csv',header = FALSE)
+output_SRCA = read.csv('Banknote_output_SRCA.csv',header = FALSE)
+output_SPCA = read.csv('Banknote_output_SPCA.csv',header = FALSE)
+output_LLE = read.csv('Banknote_output_LLE.csv',header = FALSE)
+output_tSNE = read.csv('Banknote_output_tSNE.csv',header = FALSE)
+output_UMAP = read.csv('Banknote_output_UMAP.csv',header = FALSE)
+
+
+D = pdist(data, metric = "euclidean", p = 2)
+D_SRCA = pdist(output_SRCA, metric = "euclidean", p = 2)
+D_SPCA = pdist(output_SPCA, metric = "euclidean", p = 2)
+D_PCA = pdist(output_PCA, metric = "euclidean", p = 2)
+D_LLE = pdist(output_LLE, metric = "euclidean", p = 2)
+D_tSNE = pdist(output_tSNE, metric = "euclidean", p = 2)
+D_UMAP = pdist(output_UMAP, metric = "euclidean", p = 2)
+
+
+result_SRCA = coranking( data, output_SRCA, input_Xi = "data", input_X = "data", use = "C" )
+result_SPCA = coranking( data, output_SPCA, input_Xi = "data", input_X = "data", use = "C" )
+result_PCA = coranking( data, output_PCA, input_Xi = "data", input_X = "data", use = "C" )
+result_LLE = coranking( data, output_LLE, input_Xi = "data", input_X = "data", use = "C" )
+result_tSNE = coranking( data, output_tSNE, input_Xi = "data", input_X = "data", use = "C" )
+result_UMAP = coranking( data, output_UMAP, input_Xi = "data", input_X = "data", use = "C" )
+
+png(filename="C_Banknote.png")
+old.par <- par(mfrow=c(2, 3))
+imageplot(result_SRCA,lwd = 2, bty = "n", main = "SRCA", xlab = expression(R), ylab = expression(Ro), axes = FALSE, legend = FALSE)
+imageplot(result_SPCA,lwd = 2, bty = "n", main = "SPCA", xlab = expression(R), ylab = expression(Ro), axes = FALSE, legend = FALSE)
+imageplot(result_PCA,lwd = 2, bty = "n", main = "PCA", xlab = expression(R), ylab = expression(Ro), axes = FALSE, legend = FALSE)
+imageplot(result_LLE,lwd = 2, bty = "n", main = "LLE", xlab = expression(R), ylab = expression(Ro), axes = FALSE, legend = FALSE)
+imageplot(result_tSNE,lwd = 2, bty = "n", main = "tSNE", xlab = expression(R), ylab = expression(Ro), axes = FALSE, legend = FALSE)
+imageplot(result_UMAP,lwd = 2, bty = "n", main = "UMAP", xlab = expression(R), ylab = expression(Ro),  axes = FALSE, legend = FALSE)
+par(old.par)
+dev.off()
+
+
+qnx_SRCA = coRanking:::Q_NX(result_SRCA)
+qnx_SPCA = coRanking:::Q_NX(result_SPCA)
+qnx_PCA = coRanking:::Q_NX(result_PCA)
+qnx_LLE = coRanking:::Q_NX(result_LLE)
+qnx_tSNE = coRanking:::Q_NX(result_tSNE)
+qnx_UMAP = coRanking:::Q_NX(result_UMAP)
+
+lcmc_SRCA = LCMC(result_SRCA)
+lcmc_SPCA = LCMC(result_SPCA)
+lcmc_PCA = LCMC(result_PCA)
+lcmc_LLE = LCMC(result_LLE)
+lcmc_tSNE = LCMC(result_tSNE)
+lcmc_UMAP = LCMC(result_UMAP)
+
+Kmax_SRCA <- which.max(lcmc_SRCA)
+Kmax_SPCA <- which.max(lcmc_SPCA)
+Kmax_PCA <- which.max(lcmc_PCA)
+Kmax_LLE <- which.max(lcmc_LLE)
+Kmax_tSNE <- which.max(lcmc_tSNE)
+Kmax_UMAP <- which.max(lcmc_UMAP)
+
+RNX_SRCA = coRanking:::R_NX(result_SRCA)
+RNX_SPCA = coRanking:::R_NX(result_SPCA)
+RNX_PCA = coRanking:::R_NX(result_PCA)
+RNX_LLE = coRanking:::R_NX(result_LLE)
+RNX_tSNE = coRanking:::R_NX(result_tSNE)
+RNX_UMAP = coRanking:::R_NX(result_UMAP)
+
+
+AUC_SRCA = AUC_ln_K(RNX_SRCA)
+AUC_SPCA = AUC_ln_K(RNX_SPCA)
+AUC_PCA = AUC_ln_K(RNX_PCA)
+AUC_LLE = AUC_ln_K(RNX_LLE)
+AUC_tSNE = AUC_ln_K(RNX_tSNE)
+AUC_UMAP = AUC_ln_K(RNX_UMAP)
+
+AUCs = c(AUC_SRCA,AUC_SPCA,AUC_PCA,AUC_LLE,AUC_tSNE,AUC_UMAP)
+save(AUCs, file = "AUC_Banknote.rda")
+
+
+AUC_SRCA_uw = mean(RNX_SRCA)
+AUC_SPCA_uw = mean(RNX_SPCA)
+AUC_PCA_uw = mean(RNX_PCA)
+AUC_LLE_uw = mean(RNX_LLE)
+AUC_tSNE_uw = mean(RNX_tSNE)
+AUC_UMAP_uw = mean(RNX_UMAP)
+
+AUCs_uw = c(AUC_SRCA_uw,AUC_SPCA_uw,AUC_PCA_uw,AUC_LLE_uw,AUC_tSNE_uw,AUC_UMAP_uw)
+save(AUCs_uw, file = "AUC_Banknote_uw.rda")
+
+
+png(filename="QNX_Banknote.png")
+yrange <- range(c(qnx_SRCA,qnx_SPCA,qnx_PCA,qnx_LLE,qnx_tSNE,qnx_UMAP))
+plot(qnx_SRCA, xlab = "K", ylab = expression(Q[NX]), type = "l", ylim = yrange, col = 1)
+abline(v = Kmax_SRCA, col = 1, lty = 2)
+text(Kmax_SRCA, mean(yrange) + 0.3, expression(K[SRCA]), col = 1, pos = 4)
+
+lines(qnx_SPCA, main = "SPCA", xlab = "K", ylab = expression(Q[NX]), ylim = 0:1, col = 2)
+abline(v = Kmax_SPCA, col = 2, lty = 2)
+text(Kmax_SPCA, mean(yrange) + 0.2, expression(K[SPCA]), col = 2, pos = 4)
+
+lines(qnx_PCA, main = "PCA", xlab = "K", ylab = expression(Q[NX]), ylim = 0:1, col = 3)
+abline(v = Kmax_PCA, col = 3, lty = 2)
+text(Kmax_PCA, mean(yrange) + 0.1, expression(K[PCA]), col = 3, pos = 4)
+
+lines(qnx_LLE, main = "LLE", xlab = "K", ylab = expression(Q[NX]), ylim = 0:1, col = 4)
+abline(v = Kmax_LLE, col = 4, lty = 2)
+text(Kmax_LLE, mean(yrange) , expression(K[LLE]), col = 4, pos = 4)
+
+lines(qnx_tSNE, main = "tSNE", xlab = "K", ylab = expression(Q[NX]), ylim = 0:1, col = 5)
+abline(v = Kmax_tSNE, col = 5, lty = 2)
+text(Kmax_tSNE, mean(yrange) - 0.1, expression(K[tSNE]), col = 5, pos = 4)
+
+lines(qnx_UMAP, main = "UMAP", xlab = "K", ylab = expression(Q[NX]), ylim = 0:1, col = 6)
+abline(v = Kmax_UMAP, col = 6, lty = 2)
+text(Kmax_UMAP, mean(yrange) - 0.2, expression(K[UMAP]), col = 6, pos = 4)
+
+
+legend("bottomright", legend = c("SRCA", "SPCA", "PCA", "LLE", "tSNE", "UMAP"), lty = 1, col = 1:6)
+title("Q_NX",line = -1, outer = TRUE)
+dev.off()
+
+
+
+
+png(filename="LCMC_Banknote.png")
+yrange <- range(c(lcmc_SRCA,lcmc_SPCA,lcmc_PCA,lcmc_LLE,lcmc_tSNE,lcmc_UMAP))
+plot(lcmc_SRCA, xlab = "K", ylab = expression(LCMC), type = "l", ylim = yrange, col = 1)
+lines(lcmc_SPCA, main = "SPCA", xlab = "K", ylab = expression(LCMC), ylim = 0:1, col = 2)
+lines(lcmc_PCA, main = "PCA", xlab = "K", ylab = expression(LCMC), ylim = 0:1, col = 3)
+lines(lcmc_LLE, main = "LLE", xlab = "K", ylab = expression(LCMC), ylim = 0:1, col = 4)
+lines(lcmc_tSNE, main = "tSNE", xlab = "K", ylab = expression(LCMC), ylim = 0:1, col = 5)
+lines(lcmc_UMAP, main = "UMAP", xlab = "K", ylab = expression(LCMC), ylim = 0:1, col = 6)
+legend("bottomright", legend = c("SRCA", "SPCA", "PCA", "LLE", "tSNE", "UMAP"), lty = 1, col = 1:6)
+title("LCMC_NX",line = -1, outer = TRUE)
+dev.off()
+
+
+png(filename="RNX_Banknote.png")
+yrange <- range(c(RNX_SRCA,RNX_SPCA,RNX_PCA,RNX_LLE,RNX_tSNE,RNX_UMAP))
+plot(RNX_SRCA, xlab = "K", ylab = expression(LCMC), type = "l", ylim = yrange, col = 1)
+lines(RNX_SPCA, main = "SPCA", xlab = "K", ylab = expression(LCMC), ylim = 0:1, col = 2)
+lines(RNX_PCA, main = "PCA", xlab = "K", ylab = expression(LCMC), ylim = 0:1, col = 3)
+lines(RNX_LLE, main = "LLE", xlab = "K", ylab = expression(LCMC), ylim = 0:1, col = 4)
+lines(RNX_tSNE, main = "tSNE", xlab = "K", ylab = expression(LCMC), ylim = 0:1, col = 5)
+lines(RNX_UMAP, main = "UMAP", xlab = "K", ylab = expression(LCMC), ylim = 0:1, col = 6)
+legend("bottomright", legend = c("SRCA", "SPCA", "PCA", "LLE", "tSNE", "UMAP"), lty = 1, col = 1:6)
+title("R_NX",line = -1, outer = TRUE)
+dev.off()
+
+
+
+
+
+
+
+
+
+Q_loc = c(Q_local(qnx_SRCA,Kmax_SRCA),Q_local(qnx_SPCA,Kmax_SPCA),Q_local(qnx_PCA,Kmax_PCA),Q_local(qnx_LLE,Kmax_LLE),Q_local(qnx_tSNE,Kmax_tSNE),Q_local(qnx_UMAP,Kmax_UMAP))
+Q_glob = c(Q_global(qnx_SRCA,Kmax_SRCA),Q_global(qnx_SPCA,Kmax_SPCA),Q_global(qnx_PCA,Kmax_PCA),Q_global(qnx_LLE,Kmax_LLE),Q_global(qnx_tSNE,Kmax_tSNE),Q_global(qnx_UMAP,Kmax_UMAP))
+save(Q_loc, file = "Q_local_Banknote.rda")
+save(Q_glob, file = "Q_global_Banknote.rda")
+
+Cop_SRCA = cor(as.vector(D),as.vector(D_SRCA))
+Cop_SPCA = cor(as.vector(D),as.vector(D_SPCA))
+Cop_PCA = cor(as.vector(D),as.vector(D_PCA))
+Cop_LLE = cor(as.vector(D),as.vector(D_LLE))
+Cop_tSNE = cor(as.vector(D),as.vector(D_tSNE))
+Cop_UMAP = cor(as.vector(D),as.vector(D_UMAP))
+Cop = c(Cop_SRCA,Cop_SPCA,Cop_PCA,Cop_LLE,Cop_tSNE,Cop_UMAP)
+save(Cop, file = "Cop_Banknote.rda")
+
+
+
+```
+
+
+## Ecoli
+```{r cars}
+setwd("~/Documents/GitHub/SPCA/code_method_Final/SRCA/Ecoli")
+data <- read.csv('Ecoli.csv',header = FALSE)
+data = data[,2:5]
+output_PCA = read.csv('Ecoli_output_PCA.csv',header = FALSE)
+output_SRCA = read.csv('Ecoli_output_SRCA.csv',header = FALSE)
+output_SPCA = read.csv('Ecoli_output_SPCA.csv',header = FALSE)
+output_LLE = read.csv('Ecoli_output_LLE.csv',header = FALSE)
+output_tSNE = read.csv('Ecoli_output_tSNE.csv',header = FALSE)
+output_UMAP = read.csv('Ecoli_output_UMAP.csv',header = FALSE)
+
+
+D = pdist(data, metric = "euclidean", p = 2)
+D_SRCA = pdist(output_SRCA, metric = "euclidean", p = 2)
+D_SPCA = pdist(output_SPCA, metric = "euclidean", p = 2)
+D_PCA = pdist(output_PCA, metric = "euclidean", p = 2)
+D_LLE = pdist(output_LLE, metric = "euclidean", p = 2)
+D_tSNE = pdist(output_tSNE, metric = "euclidean", p = 2)
+D_UMAP = pdist(output_UMAP, metric = "euclidean", p = 2)
+
+
+result_SRCA = coranking( data, output_SRCA, input_Xi = "data", input_X = "data", use = "C" )
+result_SPCA = coranking( data, output_SPCA, input_Xi = "data", input_X = "data", use = "C" )
+result_PCA = coranking( data, output_PCA, input_Xi = "data", input_X = "data", use = "C" )
+result_LLE = coranking( data, output_LLE, input_Xi = "data", input_X = "data", use = "C" )
+result_tSNE = coranking( data, output_tSNE, input_Xi = "data", input_X = "data", use = "C" )
+result_UMAP = coranking( data, output_UMAP, input_Xi = "data", input_X = "data", use = "C" )
+
+png(filename="C_Ecoli.png")
+old.par <- par(mfrow=c(2, 3))
+imageplot(result_SRCA,lwd = 2, bty = "n", main = "SRCA", xlab = expression(R), ylab = expression(Ro), axes = FALSE, legend = FALSE)
+imageplot(result_SPCA,lwd = 2, bty = "n", main = "SPCA", xlab = expression(R), ylab = expression(Ro), axes = FALSE, legend = FALSE)
+imageplot(result_PCA,lwd = 2, bty = "n", main = "PCA", xlab = expression(R), ylab = expression(Ro), axes = FALSE, legend = FALSE)
+imageplot(result_LLE,lwd = 2, bty = "n", main = "LLE", xlab = expression(R), ylab = expression(Ro), axes = FALSE, legend = FALSE)
+imageplot(result_tSNE,lwd = 2, bty = "n", main = "tSNE", xlab = expression(R), ylab = expression(Ro), axes = FALSE, legend = FALSE)
+imageplot(result_UMAP,lwd = 2, bty = "n", main = "UMAP", xlab = expression(R), ylab = expression(Ro),  axes = FALSE, legend = FALSE)
+par(old.par)
+dev.off()
+
+
+qnx_SRCA = coRanking:::Q_NX(result_SRCA)
+qnx_SPCA = coRanking:::Q_NX(result_SPCA)
+qnx_PCA = coRanking:::Q_NX(result_PCA)
+qnx_LLE = coRanking:::Q_NX(result_LLE)
+qnx_tSNE = coRanking:::Q_NX(result_tSNE)
+qnx_UMAP = coRanking:::Q_NX(result_UMAP)
+
+lcmc_SRCA = LCMC(result_SRCA)
+lcmc_SPCA = LCMC(result_SPCA)
+lcmc_PCA = LCMC(result_PCA)
+lcmc_LLE = LCMC(result_LLE)
+lcmc_tSNE = LCMC(result_tSNE)
+lcmc_UMAP = LCMC(result_UMAP)
+
+Kmax_SRCA <- which.max(lcmc_SRCA)
+Kmax_SPCA <- which.max(lcmc_SPCA)
+Kmax_PCA <- which.max(lcmc_PCA)
+Kmax_LLE <- which.max(lcmc_LLE)
+Kmax_tSNE <- which.max(lcmc_tSNE)
+Kmax_UMAP <- which.max(lcmc_UMAP)
+
+RNX_SRCA = coRanking:::R_NX(result_SRCA)
+RNX_SPCA = coRanking:::R_NX(result_SPCA)
+RNX_PCA = coRanking:::R_NX(result_PCA)
+RNX_LLE = coRanking:::R_NX(result_LLE)
+RNX_tSNE = coRanking:::R_NX(result_tSNE)
+RNX_UMAP = coRanking:::R_NX(result_UMAP)
+
+
+AUC_SRCA = AUC_ln_K(RNX_SRCA)
+AUC_SPCA = AUC_ln_K(RNX_SPCA)
+AUC_PCA = AUC_ln_K(RNX_PCA)
+AUC_LLE = AUC_ln_K(RNX_LLE)
+AUC_tSNE = AUC_ln_K(RNX_tSNE)
+AUC_UMAP = AUC_ln_K(RNX_UMAP)
+
+AUCs = c(AUC_SRCA,AUC_SPCA,AUC_PCA,AUC_LLE,AUC_tSNE,AUC_UMAP)
+save(AUCs, file = "AUC_Ecoli.rda")
+
+
+AUC_SRCA_uw = mean(RNX_SRCA)
+AUC_SPCA_uw = mean(RNX_SPCA)
+AUC_PCA_uw = mean(RNX_PCA)
+AUC_LLE_uw = mean(RNX_LLE)
+AUC_tSNE_uw = mean(RNX_tSNE)
+AUC_UMAP_uw = mean(RNX_UMAP)
+
+AUCs_uw = c(AUC_SRCA_uw,AUC_SPCA_uw,AUC_PCA_uw,AUC_LLE_uw,AUC_tSNE_uw,AUC_UMAP_uw)
+save(AUCs_uw, file = "AUC_Ecoli_uw.rda")
+
+
+png(filename="QNX_Ecoli.png")
+yrange <- range(c(qnx_SRCA,qnx_SPCA,qnx_PCA,qnx_LLE,qnx_tSNE,qnx_UMAP))
+plot(qnx_SRCA, xlab = "K", ylab = expression(Q[NX]), type = "l", ylim = yrange, col = 1)
+abline(v = Kmax_SRCA, col = 1, lty = 2)
+text(Kmax_SRCA, mean(yrange) + 0.3, expression(K[SRCA]), col = 1, pos = 4)
+
+lines(qnx_SPCA, main = "SPCA", xlab = "K", ylab = expression(Q[NX]), ylim = 0:1, col = 2)
+abline(v = Kmax_SPCA, col = 2, lty = 2)
+text(Kmax_SPCA, mean(yrange) + 0.2, expression(K[SPCA]), col = 2, pos = 4)
+
+lines(qnx_PCA, main = "PCA", xlab = "K", ylab = expression(Q[NX]), ylim = 0:1, col = 3)
+abline(v = Kmax_PCA, col = 3, lty = 2)
+text(Kmax_PCA, mean(yrange) + 0.1, expression(K[PCA]), col = 3, pos = 4)
+
+lines(qnx_LLE, main = "LLE", xlab = "K", ylab = expression(Q[NX]), ylim = 0:1, col = 4)
+abline(v = Kmax_LLE, col = 4, lty = 2)
+text(Kmax_LLE, mean(yrange) , expression(K[LLE]), col = 4, pos = 4)
+
+lines(qnx_tSNE, main = "tSNE", xlab = "K", ylab = expression(Q[NX]), ylim = 0:1, col = 5)
+abline(v = Kmax_tSNE, col = 5, lty = 2)
+text(Kmax_tSNE, mean(yrange) - 0.1, expression(K[tSNE]), col = 5, pos = 4)
+
+lines(qnx_UMAP, main = "UMAP", xlab = "K", ylab = expression(Q[NX]), ylim = 0:1, col = 6)
+abline(v = Kmax_UMAP, col = 6, lty = 2)
+text(Kmax_UMAP, mean(yrange) - 0.2, expression(K[UMAP]), col = 6, pos = 4)
+
+
+legend("bottomright", legend = c("SRCA", "SPCA", "PCA", "LLE", "tSNE", "UMAP"), lty = 1, col = 1:6)
+title("Q_NX",line = -1, outer = TRUE)
+dev.off()
+
+
+
+
+png(filename="LCMC_Ecoli.png")
+yrange <- range(c(lcmc_SRCA,lcmc_SPCA,lcmc_PCA,lcmc_LLE,lcmc_tSNE,lcmc_UMAP))
+plot(lcmc_SRCA, xlab = "K", ylab = expression(LCMC), type = "l", ylim = yrange, col = 1)
+lines(lcmc_SPCA, main = "SPCA", xlab = "K", ylab = expression(LCMC), ylim = 0:1, col = 2)
+lines(lcmc_PCA, main = "PCA", xlab = "K", ylab = expression(LCMC), ylim = 0:1, col = 3)
+lines(lcmc_LLE, main = "LLE", xlab = "K", ylab = expression(LCMC), ylim = 0:1, col = 4)
+lines(lcmc_tSNE, main = "tSNE", xlab = "K", ylab = expression(LCMC), ylim = 0:1, col = 5)
+lines(lcmc_UMAP, main = "UMAP", xlab = "K", ylab = expression(LCMC), ylim = 0:1, col = 6)
+legend("bottomright", legend = c("SRCA", "SPCA", "PCA", "LLE", "tSNE", "UMAP"), lty = 1, col = 1:6)
+title("LCMC_NX",line = -1, outer = TRUE)
+dev.off()
+
+
+png(filename="RNX_Ecoli.png")
+yrange <- range(c(RNX_SRCA,RNX_SPCA,RNX_PCA,RNX_LLE,RNX_tSNE,RNX_UMAP))
+plot(RNX_SRCA, xlab = "K", ylab = expression(LCMC), type = "l", ylim = yrange, col = 1)
+lines(RNX_SPCA, main = "SPCA", xlab = "K", ylab = expression(LCMC), ylim = 0:1, col = 2)
+lines(RNX_PCA, main = "PCA", xlab = "K", ylab = expression(LCMC), ylim = 0:1, col = 3)
+lines(RNX_LLE, main = "LLE", xlab = "K", ylab = expression(LCMC), ylim = 0:1, col = 4)
+lines(RNX_tSNE, main = "tSNE", xlab = "K", ylab = expression(LCMC), ylim = 0:1, col = 5)
+lines(RNX_UMAP, main = "UMAP", xlab = "K", ylab = expression(LCMC), ylim = 0:1, col = 6)
+legend("bottomright", legend = c("SRCA", "SPCA", "PCA", "LLE", "tSNE", "UMAP"), lty = 1, col = 1:6)
+title("R_NX",line = -1, outer = TRUE)
+dev.off()
+
+
+
+
+
+
+
+
+
+Q_loc = c(Q_local(qnx_SRCA,Kmax_SRCA),Q_local(qnx_SPCA,Kmax_SPCA),Q_local(qnx_PCA,Kmax_PCA),Q_local(qnx_LLE,Kmax_LLE),Q_local(qnx_tSNE,Kmax_tSNE),Q_local(qnx_UMAP,Kmax_UMAP))
+Q_glob = c(Q_global(qnx_SRCA,Kmax_SRCA),Q_global(qnx_SPCA,Kmax_SPCA),Q_global(qnx_PCA,Kmax_PCA),Q_global(qnx_LLE,Kmax_LLE),Q_global(qnx_tSNE,Kmax_tSNE),Q_global(qnx_UMAP,Kmax_UMAP))
+save(Q_loc, file = "Q_local_Ecoli.rda")
+save(Q_glob, file = "Q_global_Ecoli.rda")
+
+Cop_SRCA = cor(as.vector(D),as.vector(D_SRCA))
+Cop_SPCA = cor(as.vector(D),as.vector(D_SPCA))
+Cop_PCA = cor(as.vector(D),as.vector(D_PCA))
+Cop_LLE = cor(as.vector(D),as.vector(D_LLE))
+Cop_tSNE = cor(as.vector(D),as.vector(D_tSNE))
+Cop_UMAP = cor(as.vector(D),as.vector(D_UMAP))
+Cop = c(Cop_SRCA,Cop_SPCA,Cop_PCA,Cop_LLE,Cop_tSNE,Cop_UMAP)
+save(Cop, file = "Cop_Ecoli.rda")
+
+
+
+
+```
+
+## Power Plant
+```{r cars}
+setwd("~/Documents/GitHub/SPCA/code_method_Final/SRCA/Power")
+data <- read.csv('Power.csv',header = FALSE)
+data = data[,1:4]
+output_PCA = read.csv('Power_output_PCA.csv',header = FALSE)
+output_SRCA = read.csv('Power_output_SRCA.csv',header = FALSE)
+output_SPCA = read.csv('Power_output_SPCA.csv',header = FALSE)
+output_LLE = read.csv('Power_output_LLE.csv',header = FALSE)
+output_tSNE = read.csv('Power_output_tSNE.csv',header = FALSE)
+output_UMAP = read.csv('Power_output_UMAP.csv',header = FALSE)
+
+
+D = pdist(data, metric = "euclidean", p = 2)
+D_SRCA = pdist(output_SRCA, metric = "euclidean", p = 2)
+D_SPCA = pdist(output_SPCA, metric = "euclidean", p = 2)
+D_PCA = pdist(output_PCA, metric = "euclidean", p = 2)
+D_LLE = pdist(output_LLE, metric = "euclidean", p = 2)
+D_tSNE = pdist(output_tSNE, metric = "euclidean", p = 2)
+D_UMAP = pdist(output_UMAP, metric = "euclidean", p = 2)
+
+
+result_SRCA = coranking( data, output_SRCA, input_Xi = "data", input_X = "data", use = "C" )
+result_SPCA = coranking( data, output_SPCA, input_Xi = "data", input_X = "data", use = "C" )
+result_PCA = coranking( data, output_PCA, input_Xi = "data", input_X = "data", use = "C" )
+result_LLE = coranking( data, output_LLE, input_Xi = "data", input_X = "data", use = "C" )
+result_tSNE = coranking( data, output_tSNE, input_Xi = "data", input_X = "data", use = "C" )
+result_UMAP = coranking( data, output_UMAP, input_Xi = "data", input_X = "data", use = "C" )
+
+png(filename="C_Power.png")
+old.par <- par(mfrow=c(2, 3))
+imageplot(result_SRCA,lwd = 2, bty = "n", main = "SRCA", xlab = expression(R), ylab = expression(Ro), axes = FALSE, legend = FALSE)
+imageplot(result_SPCA,lwd = 2, bty = "n", main = "SPCA", xlab = expression(R), ylab = expression(Ro), axes = FALSE, legend = FALSE)
+imageplot(result_PCA,lwd = 2, bty = "n", main = "PCA", xlab = expression(R), ylab = expression(Ro), axes = FALSE, legend = FALSE)
+imageplot(result_LLE,lwd = 2, bty = "n", main = "LLE", xlab = expression(R), ylab = expression(Ro), axes = FALSE, legend = FALSE)
+imageplot(result_tSNE,lwd = 2, bty = "n", main = "tSNE", xlab = expression(R), ylab = expression(Ro), axes = FALSE, legend = FALSE)
+imageplot(result_UMAP,lwd = 2, bty = "n", main = "UMAP", xlab = expression(R), ylab = expression(Ro),  axes = FALSE, legend = FALSE)
+par(old.par)
+dev.off()
+
+
+qnx_SRCA = coRanking:::Q_NX(result_SRCA)
+qnx_SPCA = coRanking:::Q_NX(result_SPCA)
+qnx_PCA = coRanking:::Q_NX(result_PCA)
+qnx_LLE = coRanking:::Q_NX(result_LLE)
+qnx_tSNE = coRanking:::Q_NX(result_tSNE)
+qnx_UMAP = coRanking:::Q_NX(result_UMAP)
+
+lcmc_SRCA = LCMC(result_SRCA)
+lcmc_SPCA = LCMC(result_SPCA)
+lcmc_PCA = LCMC(result_PCA)
+lcmc_LLE = LCMC(result_LLE)
+lcmc_tSNE = LCMC(result_tSNE)
+lcmc_UMAP = LCMC(result_UMAP)
+
+Kmax_SRCA <- which.max(lcmc_SRCA)
+Kmax_SPCA <- which.max(lcmc_SPCA)
+Kmax_PCA <- which.max(lcmc_PCA)
+Kmax_LLE <- which.max(lcmc_LLE)
+Kmax_tSNE <- which.max(lcmc_tSNE)
+Kmax_UMAP <- which.max(lcmc_UMAP)
+
+RNX_SRCA = coRanking:::R_NX(result_SRCA)
+RNX_SPCA = coRanking:::R_NX(result_SPCA)
+RNX_PCA = coRanking:::R_NX(result_PCA)
+RNX_LLE = coRanking:::R_NX(result_LLE)
+RNX_tSNE = coRanking:::R_NX(result_tSNE)
+RNX_UMAP = coRanking:::R_NX(result_UMAP)
+
+
+AUC_SRCA = AUC_ln_K(RNX_SRCA)
+AUC_SPCA = AUC_ln_K(RNX_SPCA)
+AUC_PCA = AUC_ln_K(RNX_PCA)
+AUC_LLE = AUC_ln_K(RNX_LLE)
+AUC_tSNE = AUC_ln_K(RNX_tSNE)
+AUC_UMAP = AUC_ln_K(RNX_UMAP)
+
+AUCs = c(AUC_SRCA,AUC_SPCA,AUC_PCA,AUC_LLE,AUC_tSNE,AUC_UMAP)
+save(AUCs, file = "AUC_Power.rda")
+
+
+AUC_SRCA_uw = mean(RNX_SRCA)
+AUC_SPCA_uw = mean(RNX_SPCA)
+AUC_PCA_uw = mean(RNX_PCA)
+AUC_LLE_uw = mean(RNX_LLE)
+AUC_tSNE_uw = mean(RNX_tSNE)
+AUC_UMAP_uw = mean(RNX_UMAP)
+
+AUCs_uw = c(AUC_SRCA_uw,AUC_SPCA_uw,AUC_PCA_uw,AUC_LLE_uw,AUC_tSNE_uw,AUC_UMAP_uw)
+save(AUCs_uw, file = "AUC_Power_uw.rda")
+
+
+png(filename="QNX_Power.png")
+yrange <- range(c(qnx_SRCA,qnx_SPCA,qnx_PCA,qnx_LLE,qnx_tSNE,qnx_UMAP))
+plot(qnx_SRCA, xlab = "K", ylab = expression(Q[NX]), type = "l", ylim = yrange, col = 1)
+abline(v = Kmax_SRCA, col = 1, lty = 2)
+text(Kmax_SRCA, mean(yrange) + 0.3, expression(K[SRCA]), col = 1, pos = 4)
+
+lines(qnx_SPCA, main = "SPCA", xlab = "K", ylab = expression(Q[NX]), ylim = 0:1, col = 2)
+abline(v = Kmax_SPCA, col = 2, lty = 2)
+text(Kmax_SPCA, mean(yrange) + 0.2, expression(K[SPCA]), col = 2, pos = 4)
+
+lines(qnx_PCA, main = "PCA", xlab = "K", ylab = expression(Q[NX]), ylim = 0:1, col = 3)
+abline(v = Kmax_PCA, col = 3, lty = 2)
+text(Kmax_PCA, mean(yrange) + 0.1, expression(K[PCA]), col = 3, pos = 4)
+
+lines(qnx_LLE, main = "LLE", xlab = "K", ylab = expression(Q[NX]), ylim = 0:1, col = 4)
+abline(v = Kmax_LLE, col = 4, lty = 2)
+text(Kmax_LLE, mean(yrange) , expression(K[LLE]), col = 4, pos = 4)
+
+lines(qnx_tSNE, main = "tSNE", xlab = "K", ylab = expression(Q[NX]), ylim = 0:1, col = 5)
+abline(v = Kmax_tSNE, col = 5, lty = 2)
+text(Kmax_tSNE, mean(yrange) - 0.1, expression(K[tSNE]), col = 5, pos = 4)
+
+lines(qnx_UMAP, main = "UMAP", xlab = "K", ylab = expression(Q[NX]), ylim = 0:1, col = 6)
+abline(v = Kmax_UMAP, col = 6, lty = 2)
+text(Kmax_UMAP, mean(yrange) - 0.2, expression(K[UMAP]), col = 6, pos = 4)
+
+legend("bottomright", legend = c("SRCA", "SPCA", "PCA", "LLE", "tSNE", "UMAP"), lty = 1, col = 1:6)
+title("Q_NX",line = -1, outer = TRUE)
+dev.off()
+
+
+
+
+png(filename="LCMC_Power.png")
+yrange <- range(c(lcmc_SRCA,lcmc_SPCA,lcmc_PCA,lcmc_LLE,lcmc_tSNE,lcmc_UMAP))
+plot(lcmc_SRCA, xlab = "K", ylab = expression(LCMC), type = "l", ylim = yrange, col = 1)
+lines(lcmc_SPCA, main = "SPCA", xlab = "K", ylab = expression(LCMC), ylim = 0:1, col = 2)
+lines(lcmc_PCA, main = "PCA", xlab = "K", ylab = expression(LCMC), ylim = 0:1, col = 3)
+lines(lcmc_LLE, main = "LLE", xlab = "K", ylab = expression(LCMC), ylim = 0:1, col = 4)
+lines(lcmc_tSNE, main = "tSNE", xlab = "K", ylab = expression(LCMC), ylim = 0:1, col = 5)
+lines(lcmc_UMAP, main = "UMAP", xlab = "K", ylab = expression(LCMC), ylim = 0:1, col = 6)
+legend("bottomright", legend = c("SRCA", "SPCA", "PCA", "LLE", "tSNE", "UMAP"), lty = 1, col = 1:6)
+title("LCMC_NX",line = -1, outer = TRUE)
+dev.off()
+
+
+png(filename="RNX_Power.png")
+yrange <- range(c(RNX_SRCA,RNX_SPCA,RNX_PCA,RNX_LLE,RNX_tSNE,RNX_UMAP))
+plot(RNX_SRCA, xlab = "K", ylab = expression(LCMC), type = "l", ylim = yrange, col = 1)
+lines(RNX_SPCA, main = "SPCA", xlab = "K", ylab = expression(LCMC), ylim = 0:1, col = 2)
+lines(RNX_PCA, main = "PCA", xlab = "K", ylab = expression(LCMC), ylim = 0:1, col = 3)
+lines(RNX_LLE, main = "LLE", xlab = "K", ylab = expression(LCMC), ylim = 0:1, col = 4)
+lines(RNX_tSNE, main = "tSNE", xlab = "K", ylab = expression(LCMC), ylim = 0:1, col = 5)
+lines(RNX_UMAP, main = "UMAP", xlab = "K", ylab = expression(LCMC), ylim = 0:1, col = 6)
+legend("bottomright", legend = c("SRCA", "SPCA", "PCA", "LLE", "tSNE", "UMAP"), lty = 1, col = 1:6)
+title("R_NX",line = -1, outer = TRUE)
+dev.off()
+
+
+
+
+
+
+
+
+
+Q_loc = c(Q_local(qnx_SRCA,Kmax_SRCA),Q_local(qnx_SPCA,Kmax_SPCA),Q_local(qnx_PCA,Kmax_PCA),Q_local(qnx_LLE,Kmax_LLE),Q_local(qnx_tSNE,Kmax_tSNE),Q_local(qnx_UMAP,Kmax_UMAP))
+Q_glob = c(Q_global(qnx_SRCA,Kmax_SRCA),Q_global(qnx_SPCA,Kmax_SPCA),Q_global(qnx_PCA,Kmax_PCA),Q_global(qnx_LLE,Kmax_LLE),Q_global(qnx_tSNE,Kmax_tSNE),Q_global(qnx_UMAP,Kmax_UMAP))
+save(Q_loc, file = "Q_local_Power.rda")
+save(Q_glob, file = "Q_global_Power.rda")
+
+Cop_SRCA = cor(as.vector(D),as.vector(D_SRCA))
+Cop_SPCA = cor(as.vector(D),as.vector(D_SPCA))
+Cop_PCA = cor(as.vector(D),as.vector(D_PCA))
+Cop_LLE = cor(as.vector(D),as.vector(D_LLE))
+Cop_tSNE = cor(as.vector(D),as.vector(D_tSNE))
+Cop_UMAP = cor(as.vector(D),as.vector(D_UMAP))
+Cop = c(Cop_SRCA,Cop_SPCA,Cop_PCA,Cop_LLE,Cop_tSNE,Cop_UMAP)
+save(Cop, file = "Cop_Power.rda")
+
+```
+
+
+## Galaxy Zoo
+```{r cars}
+setwd("~/Documents/GitHub/SPCA/code_method_Final/SRCA/Galaxy")
+data <- read.csv('Galaxy.csv',header = FALSE)
+data = data[,1:7]
+output_PCA = read.csv('Galaxy_output_PCA.csv',header = FALSE)
+output_SRCA = read.csv('Galaxy_output_SRCA.csv',header = FALSE)
+output_SPCA = read.csv('Galaxy_output_SPCA.csv',header = FALSE)
+output_LLE = read.csv('Galaxy_output_LLE.csv',header = FALSE)
+output_tSNE = read.csv('Galaxy_output_tSNE.csv',header = FALSE)
+output_UMAP = read.csv('Galaxy_output_UMAP.csv',header = FALSE)
+
+
+D = pdist(data, metric = "euclidean", p = 2)
+D_SRCA = pdist(output_SRCA, metric = "euclidean", p = 2)
+D_SPCA = pdist(output_SPCA, metric = "euclidean", p = 2)
+D_PCA = pdist(output_PCA, metric = "euclidean", p = 2)
+D_LLE = pdist(output_LLE, metric = "euclidean", p = 2)
+D_tSNE = pdist(output_tSNE, metric = "euclidean", p = 2)
+D_UMAP = pdist(output_UMAP, metric = "euclidean", p = 2)
+
+
+result_SRCA = coranking( data, output_SRCA, input_Xi = "data", input_X = "data", use = "C" )
+result_SPCA = coranking( data, output_SPCA, input_Xi = "data", input_X = "data", use = "C" )
+result_PCA = coranking( data, output_PCA, input_Xi = "data", input_X = "data", use = "C" )
+result_LLE = coranking( data, output_LLE, input_Xi = "data", input_X = "data", use = "C" )
+result_tSNE = coranking( data, output_tSNE, input_Xi = "data", input_X = "data", use = "C" )
+result_UMAP = coranking( data, output_UMAP, input_Xi = "data", input_X = "data", use = "C" )
+
+png(filename="C_Galaxy.png")
+old.par <- par(mfrow=c(2, 3))
+imageplot(result_SRCA,lwd = 2, bty = "n", main = "SRCA", xlab = expression(R), ylab = expression(Ro), axes = FALSE, legend = FALSE)
+imageplot(result_SPCA,lwd = 2, bty = "n", main = "SPCA", xlab = expression(R), ylab = expression(Ro), axes = FALSE, legend = FALSE)
+imageplot(result_PCA,lwd = 2, bty = "n", main = "PCA", xlab = expression(R), ylab = expression(Ro), axes = FALSE, legend = FALSE)
+imageplot(result_LLE,lwd = 2, bty = "n", main = "LLE", xlab = expression(R), ylab = expression(Ro), axes = FALSE, legend = FALSE)
+imageplot(result_tSNE,lwd = 2, bty = "n", main = "tSNE", xlab = expression(R), ylab = expression(Ro), axes = FALSE, legend = FALSE)
+imageplot(result_UMAP,lwd = 2, bty = "n", main = "UMAP", xlab = expression(R), ylab = expression(Ro),  axes = FALSE, legend = FALSE)
+par(old.par)
+dev.off()
+
+
+qnx_SRCA = coRanking:::Q_NX(result_SRCA)
+qnx_SPCA = coRanking:::Q_NX(result_SPCA)
+qnx_PCA = coRanking:::Q_NX(result_PCA)
+qnx_LLE = coRanking:::Q_NX(result_LLE)
+qnx_tSNE = coRanking:::Q_NX(result_tSNE)
+qnx_UMAP = coRanking:::Q_NX(result_UMAP)
+
+lcmc_SRCA = LCMC(result_SRCA)
+lcmc_SPCA = LCMC(result_SPCA)
+lcmc_PCA = LCMC(result_PCA)
+lcmc_LLE = LCMC(result_LLE)
+lcmc_tSNE = LCMC(result_tSNE)
+lcmc_UMAP = LCMC(result_UMAP)
+
+Kmax_SRCA <- which.max(lcmc_SRCA)
+Kmax_SPCA <- which.max(lcmc_SPCA)
+Kmax_PCA <- which.max(lcmc_PCA)
+Kmax_LLE <- which.max(lcmc_LLE)
+Kmax_tSNE <- which.max(lcmc_tSNE)
+Kmax_UMAP <- which.max(lcmc_UMAP)
+
+RNX_SRCA = coRanking:::R_NX(result_SRCA)
+RNX_SPCA = coRanking:::R_NX(result_SPCA)
+RNX_PCA = coRanking:::R_NX(result_PCA)
+RNX_LLE = coRanking:::R_NX(result_LLE)
+RNX_tSNE = coRanking:::R_NX(result_tSNE)
+RNX_UMAP = coRanking:::R_NX(result_UMAP)
+
+
+AUC_SRCA = AUC_ln_K(RNX_SRCA)
+AUC_SPCA = AUC_ln_K(RNX_SPCA)
+AUC_PCA = AUC_ln_K(RNX_PCA)
+AUC_LLE = AUC_ln_K(RNX_LLE)
+AUC_tSNE = AUC_ln_K(RNX_tSNE)
+AUC_UMAP = AUC_ln_K(RNX_UMAP)
+
+AUCs = c(AUC_SRCA,AUC_SPCA,AUC_PCA,AUC_LLE,AUC_tSNE,AUC_UMAP)
+save(AUCs, file = "AUC_Galaxy.rda")
+
+
+AUC_SRCA_uw = mean(RNX_SRCA)
+AUC_SPCA_uw = mean(RNX_SPCA)
+AUC_PCA_uw = mean(RNX_PCA)
+AUC_LLE_uw = mean(RNX_LLE)
+AUC_tSNE_uw = mean(RNX_tSNE)
+AUC_UMAP_uw = mean(RNX_UMAP)
+
+AUCs_uw = c(AUC_SRCA_uw,AUC_SPCA_uw,AUC_PCA_uw,AUC_LLE_uw,AUC_tSNE_uw,AUC_UMAP_uw)
+save(AUCs_uw, file = "AUC_Galaxy_uw.rda")
+
+
+png(filename="QNX_Galaxy.png")
+yrange <- range(c(qnx_SRCA,qnx_SPCA,qnx_PCA,qnx_LLE,qnx_tSNE,qnx_UMAP))
+plot(qnx_SRCA, xlab = "K", ylab = expression(Q[NX]), type = "l", ylim = yrange, col = 1)
+abline(v = Kmax_SRCA, col = 1, lty = 2)
+text(Kmax_SRCA, mean(yrange) + 0.3, expression(K[SRCA]), col = 1, pos = 4)
+
+lines(qnx_SPCA, main = "SPCA", xlab = "K", ylab = expression(Q[NX]), ylim = 0:1, col = 2)
+abline(v = Kmax_SPCA, col = 2, lty = 2)
+text(Kmax_SPCA, mean(yrange) + 0.2, expression(K[SPCA]), col = 2, pos = 4)
+
+lines(qnx_PCA, main = "PCA", xlab = "K", ylab = expression(Q[NX]), ylim = 0:1, col = 3)
+abline(v = Kmax_PCA, col = 3, lty = 2)
+text(Kmax_PCA, mean(yrange) + 0.1, expression(K[PCA]), col = 3, pos = 4)
+
+lines(qnx_LLE, main = "LLE", xlab = "K", ylab = expression(Q[NX]), ylim = 0:1, col = 4)
+abline(v = Kmax_LLE, col = 4, lty = 2)
+text(Kmax_LLE, mean(yrange) , expression(K[LLE]), col = 4, pos = 4)
+
+lines(qnx_tSNE, main = "tSNE", xlab = "K", ylab = expression(Q[NX]), ylim = 0:1, col = 5)
+abline(v = Kmax_tSNE, col = 5, lty = 2)
+text(Kmax_tSNE, mean(yrange) - 0.1, expression(K[tSNE]), col = 5, pos = 4)
+
+lines(qnx_UMAP, main = "UMAP", xlab = "K", ylab = expression(Q[NX]), ylim = 0:1, col = 6)
+abline(v = Kmax_UMAP, col = 6, lty = 2)
+text(Kmax_UMAP, mean(yrange) - 0.2, expression(K[UMAP]), col = 6, pos = 4)
+
+legend("bottomright", legend = c("SRCA", "SPCA", "PCA", "LLE", "tSNE", "UMAP"), lty = 1, col = 1:6)
+title("Q_NX",line = -1, outer = TRUE)
+dev.off()
+
+
+
+
+png(filename="LCMC_Galaxy.png")
+yrange <- range(c(lcmc_SRCA,lcmc_SPCA,lcmc_PCA,lcmc_LLE,lcmc_tSNE,lcmc_UMAP))
+plot(lcmc_SRCA, xlab = "K", ylab = expression(LCMC), type = "l", ylim = yrange, col = 1)
+lines(lcmc_SPCA, main = "SPCA", xlab = "K", ylab = expression(LCMC), ylim = 0:1, col = 2)
+lines(lcmc_PCA, main = "PCA", xlab = "K", ylab = expression(LCMC), ylim = 0:1, col = 3)
+lines(lcmc_LLE, main = "LLE", xlab = "K", ylab = expression(LCMC), ylim = 0:1, col = 4)
+lines(lcmc_tSNE, main = "tSNE", xlab = "K", ylab = expression(LCMC), ylim = 0:1, col = 5)
+lines(lcmc_UMAP, main = "UMAP", xlab = "K", ylab = expression(LCMC), ylim = 0:1, col = 6)
+legend("bottomright", legend = c("SRCA", "SPCA", "PCA", "LLE", "tSNE", "UMAP"), lty = 1, col = 1:6)
+title("LCMC_NX",line = -1, outer = TRUE)
+dev.off()
+
+
+png(filename="RNX_Galaxy.png")
+yrange <- range(c(RNX_SRCA,RNX_SPCA,RNX_PCA,RNX_LLE,RNX_tSNE,RNX_UMAP))
+plot(RNX_SRCA, xlab = "K", ylab = expression(LCMC), type = "l", ylim = yrange, col = 1)
+lines(RNX_SPCA, main = "SPCA", xlab = "K", ylab = expression(LCMC), ylim = 0:1, col = 2)
+lines(RNX_PCA, main = "PCA", xlab = "K", ylab = expression(LCMC), ylim = 0:1, col = 3)
+lines(RNX_LLE, main = "LLE", xlab = "K", ylab = expression(LCMC), ylim = 0:1, col = 4)
+lines(RNX_tSNE, main = "tSNE", xlab = "K", ylab = expression(LCMC), ylim = 0:1, col = 5)
+lines(RNX_UMAP, main = "UMAP", xlab = "K", ylab = expression(LCMC), ylim = 0:1, col = 6)
+legend("bottomright", legend = c("SRCA", "SPCA", "PCA", "LLE", "tSNE", "UMAP"), lty = 1, col = 1:6)
+title("R_NX",line = -1, outer = TRUE)
+dev.off()
+
+
+
+
+
+
+
+
+
+Q_loc = c(Q_local(qnx_SRCA,Kmax_SRCA),Q_local(qnx_SPCA,Kmax_SPCA),Q_local(qnx_PCA,Kmax_PCA),Q_local(qnx_LLE,Kmax_LLE),Q_local(qnx_tSNE,Kmax_tSNE),Q_local(qnx_UMAP,Kmax_UMAP))
+Q_glob = c(Q_global(qnx_SRCA,Kmax_SRCA),Q_global(qnx_SPCA,Kmax_SPCA),Q_global(qnx_PCA,Kmax_PCA),Q_global(qnx_LLE,Kmax_LLE),Q_global(qnx_tSNE,Kmax_tSNE),Q_global(qnx_UMAP,Kmax_UMAP))
+save(Q_loc, file = "Q_local_Galaxy.rda")
+save(Q_glob, file = "Q_global_Galaxy.rda")
+
+Cop_SRCA = cor(as.vector(D),as.vector(D_SRCA))
+Cop_SPCA = cor(as.vector(D),as.vector(D_SPCA))
+Cop_PCA = cor(as.vector(D),as.vector(D_PCA))
+Cop_LLE = cor(as.vector(D),as.vector(D_LLE))
+Cop_tSNE = cor(as.vector(D),as.vector(D_tSNE))
+Cop_UMAP = cor(as.vector(D),as.vector(D_UMAP))
+Cop = c(Cop_SRCA,Cop_SPCA,Cop_PCA,Cop_LLE,Cop_tSNE,Cop_UMAP)
+save(Cop, file = "Cop_Galaxy.rda")
+
+
+
+
+```
+
+
+## Leaf
+```{r cars}
+library(dimRed)
+library(coRanking)
+library(rdist)
+setwd("~/Documents/GitHub/SPCA/code_method_Final/SRCA/Leaf")
+data <- read.csv('Leaf.csv',header = FALSE)
+data = data[,1:7]
+output_PCA = read.csv('Leaf_output_PCA.csv',header = FALSE)
+output_SRCA = read.csv('Leaf_output_SRCA.csv',header = FALSE)
+output_SPCA = read.csv('Leaf_output_SPCA.csv',header = FALSE)
+output_LLE = read.csv('Leaf_output_LLE.csv',header = FALSE)
+output_tSNE = read.csv('Leaf_output_tSNE.csv',header = FALSE)
+output_UMAP = read.csv('Leaf_output_UMAP.csv',header = FALSE)
+
+D = pdist(data, metric = "euclidean", p = 2)
+D_SRCA = pdist(output_SRCA, metric = "euclidean", p = 2)
+D_SPCA = pdist(output_SPCA, metric = "euclidean", p = 2)
+D_PCA = pdist(output_PCA, metric = "euclidean", p = 2)
+D_LLE = pdist(output_LLE, metric = "euclidean", p = 2)
+D_tSNE = pdist(output_tSNE, metric = "euclidean", p = 2)
+D_UMAP = pdist(output_UMAP, metric = "euclidean", p = 2)
+
+
+result_SRCA = coranking( data, output_SRCA, input_Xi = "data", input_X = "data", use = "C" )
+result_SPCA = coranking( data, output_SPCA, input_Xi = "data", input_X = "data", use = "C" )
+result_PCA = coranking( data, output_PCA, input_Xi = "data", input_X = "data", use = "C" )
+result_LLE = coranking( data, output_LLE, input_Xi = "data", input_X = "data", use = "C" )
+result_tSNE = coranking( data, output_tSNE, input_Xi = "data", input_X = "data", use = "C" )
+result_UMAP = coranking( data, output_UMAP, input_Xi = "data", input_X = "data", use = "C" )
+
+png(filename="C_Leaf.png")
+old.par <- par(mfrow=c(2, 3))
+imageplot(result_SRCA,lwd = 2, bty = "n", main = "SRCA", xlab = expression(R), ylab = expression(Ro), axes = FALSE, legend = FALSE)
+imageplot(result_SPCA,lwd = 2, bty = "n", main = "SPCA", xlab = expression(R), ylab = expression(Ro), axes = FALSE, legend = FALSE)
+imageplot(result_PCA,lwd = 2, bty = "n", main = "PCA", xlab = expression(R), ylab = expression(Ro), axes = FALSE, legend = FALSE)
+imageplot(result_LLE,lwd = 2, bty = "n", main = "LLE", xlab = expression(R), ylab = expression(Ro), axes = FALSE, legend = FALSE)
+imageplot(result_tSNE,lwd = 2, bty = "n", main = "tSNE", xlab = expression(R), ylab = expression(Ro), axes = FALSE, legend = FALSE)
+imageplot(result_UMAP,lwd = 2, bty = "n", main = "UMAP", xlab = expression(R), ylab = expression(Ro),  axes = FALSE, legend = FALSE)
+par(old.par)
+dev.off()
+
+
+qnx_SRCA = coRanking:::Q_NX(result_SRCA)
+qnx_SPCA = coRanking:::Q_NX(result_SPCA)
+qnx_PCA = coRanking:::Q_NX(result_PCA)
+qnx_LLE = coRanking:::Q_NX(result_LLE)
+qnx_tSNE = coRanking:::Q_NX(result_tSNE)
+qnx_UMAP = coRanking:::Q_NX(result_UMAP)
+
+lcmc_SRCA = LCMC(result_SRCA)
+lcmc_SPCA = LCMC(result_SPCA)
+lcmc_PCA = LCMC(result_PCA)
+lcmc_LLE = LCMC(result_LLE)
+lcmc_tSNE = LCMC(result_tSNE)
+lcmc_UMAP = LCMC(result_UMAP)
+
+Kmax_SRCA <- which.max(lcmc_SRCA)
+Kmax_SPCA <- which.max(lcmc_SPCA)
+Kmax_PCA <- which.max(lcmc_PCA)
+Kmax_LLE <- which.max(lcmc_LLE)
+Kmax_tSNE <- which.max(lcmc_tSNE)
+Kmax_UMAP <- which.max(lcmc_UMAP)
+
+RNX_SRCA = coRanking:::R_NX(result_SRCA)
+RNX_SPCA = coRanking:::R_NX(result_SPCA)
+RNX_PCA = coRanking:::R_NX(result_PCA)
+RNX_LLE = coRanking:::R_NX(result_LLE)
+RNX_tSNE = coRanking:::R_NX(result_tSNE)
+RNX_UMAP = coRanking:::R_NX(result_UMAP)
+
+
+AUC_SRCA = AUC_ln_K(RNX_SRCA)
+AUC_SPCA = AUC_ln_K(RNX_SPCA)
+AUC_PCA = AUC_ln_K(RNX_PCA)
+AUC_LLE = AUC_ln_K(RNX_LLE)
+AUC_tSNE = AUC_ln_K(RNX_tSNE)
+AUC_UMAP = AUC_ln_K(RNX_UMAP)
+
+AUCs = c(AUC_SRCA,AUC_SPCA,AUC_PCA,AUC_LLE,AUC_tSNE,AUC_UMAP)
+save(AUCs, file = "AUC_Leaf.rda")
+
+
+AUC_SRCA_uw = mean(RNX_SRCA)
+AUC_SPCA_uw = mean(RNX_SPCA)
+AUC_PCA_uw = mean(RNX_PCA)
+AUC_LLE_uw = mean(RNX_LLE)
+AUC_tSNE_uw = mean(RNX_tSNE)
+AUC_UMAP_uw = mean(RNX_UMAP)
+
+AUCs_uw = c(AUC_SRCA_uw,AUC_SPCA_uw,AUC_PCA_uw,AUC_LLE_uw,AUC_tSNE_uw,AUC_UMAP_uw)
+save(AUCs_uw, file = "AUC_Leaf_uw.rda")
+
+
+png(filename="QNX_Leaf.png")
+yrange <- range(c(qnx_SRCA,qnx_SPCA,qnx_PCA,qnx_LLE,qnx_tSNE,qnx_UMAP))
+plot(qnx_SRCA, xlab = "K", ylab = expression(Q[NX]), type = "l", ylim = yrange, col = 1)
+abline(v = Kmax_SRCA, col = 1, lty = 2)
+text(Kmax_SRCA, mean(yrange) + 0.3, expression(K[SRCA]), col = 1, pos = 4)
+
+lines(qnx_SPCA, main = "SPCA", xlab = "K", ylab = expression(Q[NX]), ylim = 0:1, col = 2)
+abline(v = Kmax_SPCA, col = 2, lty = 2)
+text(Kmax_SPCA, mean(yrange) + 0.2, expression(K[SPCA]), col = 2, pos = 4)
+
+lines(qnx_PCA, main = "PCA", xlab = "K", ylab = expression(Q[NX]), ylim = 0:1, col = 3)
+abline(v = Kmax_PCA, col = 3, lty = 2)
+text(Kmax_PCA, mean(yrange) + 0.1, expression(K[PCA]), col = 3, pos = 4)
+
+lines(qnx_LLE, main = "LLE", xlab = "K", ylab = expression(Q[NX]), ylim = 0:1, col = 4)
+abline(v = Kmax_LLE, col = 4, lty = 2)
+text(Kmax_LLE, mean(yrange) , expression(K[LLE]), col = 4, pos = 4)
+
+lines(qnx_tSNE, main = "tSNE", xlab = "K", ylab = expression(Q[NX]), ylim = 0:1, col = 5)
+abline(v = Kmax_tSNE, col = 5, lty = 2)
+text(Kmax_tSNE, mean(yrange) - 0.1, expression(K[tSNE]), col = 5, pos = 4)
+
+lines(qnx_UMAP, main = "UMAP", xlab = "K", ylab = expression(Q[NX]), ylim = 0:1, col = 6)
+abline(v = Kmax_UMAP, col = 6, lty = 2)
+text(Kmax_UMAP, mean(yrange) - 0.2, expression(K[UMAP]), col = 6, pos = 4)
+
+legend("bottomright", legend = c("SRCA", "SPCA", "PCA", "LLE", "tSNE", "UMAP"), lty = 1, col = 1:6)
+title("Q_NX",line = -1, outer = TRUE)
+dev.off()
+
+
+
+
+png(filename="LCMC_Leaf.png")
+yrange <- range(c(lcmc_SRCA,lcmc_SPCA,lcmc_PCA,lcmc_LLE,lcmc_tSNE,lcmc_UMAP))
+plot(lcmc_SRCA, xlab = "K", ylab = expression(LCMC), type = "l", ylim = yrange, col = 1)
+lines(lcmc_SPCA, main = "SPCA", xlab = "K", ylab = expression(LCMC), ylim = 0:1, col = 2)
+lines(lcmc_PCA, main = "PCA", xlab = "K", ylab = expression(LCMC), ylim = 0:1, col = 3)
+lines(lcmc_LLE, main = "LLE", xlab = "K", ylab = expression(LCMC), ylim = 0:1, col = 4)
+lines(lcmc_tSNE, main = "tSNE", xlab = "K", ylab = expression(LCMC), ylim = 0:1, col = 5)
+lines(lcmc_UMAP, main = "UMAP", xlab = "K", ylab = expression(LCMC), ylim = 0:1, col = 6)
+legend("bottomright", legend = c("SRCA", "SPCA", "PCA", "LLE", "tSNE", "UMAP"), lty = 1, col = 1:6)
+title("LCMC_NX",line = -1, outer = TRUE)
+dev.off()
+
+
+png(filename="RNX_Leaf.png")
+yrange <- range(c(RNX_SRCA,RNX_SPCA,RNX_PCA,RNX_LLE,RNX_tSNE,RNX_UMAP))
+plot(RNX_SRCA, xlab = "K", ylab = expression(LCMC), type = "l", ylim = yrange, col = 1)
+lines(RNX_SPCA, main = "SPCA", xlab = "K", ylab = expression(LCMC), ylim = 0:1, col = 2)
+lines(RNX_PCA, main = "PCA", xlab = "K", ylab = expression(LCMC), ylim = 0:1, col = 3)
+lines(RNX_LLE, main = "LLE", xlab = "K", ylab = expression(LCMC), ylim = 0:1, col = 4)
+lines(RNX_tSNE, main = "tSNE", xlab = "K", ylab = expression(LCMC), ylim = 0:1, col = 5)
+lines(RNX_UMAP, main = "UMAP", xlab = "K", ylab = expression(LCMC), ylim = 0:1, col = 6)
+legend("bottomright", legend = c("SRCA", "SPCA", "PCA", "LLE", "tSNE", "UMAP"), lty = 1, col = 1:6)
+title("R_NX",line = -1, outer = TRUE)
+dev.off()
+
+
+
+
+
+
+
+
+
+Q_loc = c(Q_local(qnx_SRCA,Kmax_SRCA),Q_local(qnx_SPCA,Kmax_SPCA),Q_local(qnx_PCA,Kmax_PCA),Q_local(qnx_LLE,Kmax_LLE),Q_local(qnx_tSNE,Kmax_tSNE),Q_local(qnx_UMAP,Kmax_UMAP))
+Q_glob = c(Q_global(qnx_SRCA,Kmax_SRCA),Q_global(qnx_SPCA,Kmax_SPCA),Q_global(qnx_PCA,Kmax_PCA),Q_global(qnx_LLE,Kmax_LLE),Q_global(qnx_tSNE,Kmax_tSNE),Q_global(qnx_UMAP,Kmax_UMAP))
+save(Q_loc, file = "Q_local_Leaf.rda")
+save(Q_glob, file = "Q_global_Leaf.rda")
+
+Cop_SRCA = cor(as.vector(D),as.vector(D_SRCA))
+Cop_SPCA = cor(as.vector(D),as.vector(D_SPCA))
+Cop_PCA = cor(as.vector(D),as.vector(D_PCA))
+Cop_LLE = cor(as.vector(D),as.vector(D_LLE))
+Cop_tSNE = cor(as.vector(D),as.vector(D_tSNE))
+Cop_UMAP = cor(as.vector(D),as.vector(D_UMAP))
+Cop = c(Cop_SRCA,Cop_SPCA,Cop_PCA,Cop_LLE,Cop_tSNE,Cop_UMAP)
+save(Cop, file = "Cop_Leaf.rda")
+
+
+```
+## Alon
+```{r cars}
+library(dimRed)
+library(coRanking)
+library(rdist)
+setwd("~/Documents/GitHub/SPCA/code_method_Final/SRCA/Alon")
+data <- read.csv('alon.csv',header = TRUE)
+data = data[,2:2001]
+output_PCA = read.csv('Alon_output_PCA.csv',header = FALSE)
+output_SRCA = read.csv('Alon_output_SRCA.csv',header = FALSE)
+output_SPCA = read.csv('Alon_output_SPCA.csv',header = FALSE)
+output_LLE = read.csv('Alon_output_LLE.csv',header = FALSE)
+output_tSNE = read.csv('Alon_output_tSNE.csv',header = FALSE)
+output_UMAP = read.csv('Alon_output_UMAP.csv',header = FALSE)
+
+D = pdist(data, metric = "euclidean", p = 2)
+D_SRCA = pdist(output_SRCA, metric = "euclidean", p = 2)
+D_SPCA = pdist(output_SPCA, metric = "euclidean", p = 2)
+D_PCA = pdist(output_PCA, metric = "euclidean", p = 2)
+D_LLE = pdist(output_LLE, metric = "euclidean", p = 2)
+D_tSNE = pdist(output_tSNE, metric = "euclidean", p = 2)
+D_UMAP = pdist(output_UMAP, metric = "euclidean", p = 2)
+
+
+result_SRCA = coranking( data, output_SRCA, input_Xi = "data", input_X = "data", use = "C" )
+result_SPCA = coranking( data, output_SPCA, input_Xi = "data", input_X = "data", use = "C" )
+result_PCA = coranking( data, output_PCA, input_Xi = "data", input_X = "data", use = "C" )
+result_LLE = coranking( data, output_LLE, input_Xi = "data", input_X = "data", use = "C" )
+result_tSNE = coranking( data, output_tSNE, input_Xi = "data", input_X = "data", use = "C" )
+result_UMAP = coranking( data, output_UMAP, input_Xi = "data", input_X = "data", use = "C" )
+
+
+qnx_SRCA = coRanking:::Q_NX(result_SRCA)
+qnx_SPCA = coRanking:::Q_NX(result_SPCA)
+qnx_PCA = coRanking:::Q_NX(result_PCA)
+qnx_LLE = coRanking:::Q_NX(result_LLE)
+qnx_tSNE = coRanking:::Q_NX(result_tSNE)
+qnx_UMAP = coRanking:::Q_NX(result_UMAP)
+
+
+
+lcmc_SRCA = LCMC(result_SRCA)
+lcmc_SPCA = LCMC(result_SPCA)
+lcmc_PCA = LCMC(result_PCA)
+lcmc_LLE = LCMC(result_LLE)
+lcmc_tSNE = LCMC(result_tSNE)
+lcmc_UMAP = LCMC(result_UMAP)
+
+Kmax_SRCA <- which.max(lcmc_SRCA)
+Kmax_SPCA <- which.max(lcmc_SPCA)
+Kmax_PCA <- which.max(lcmc_PCA)
+Kmax_LLE <- which.max(lcmc_LLE)
+Kmax_tSNE <- which.max(lcmc_tSNE)
+Kmax_UMAP <- which.max(lcmc_UMAP)
+
+RNX_SRCA = coRanking:::R_NX(result_SRCA)
+RNX_SPCA = coRanking:::R_NX(result_SPCA)
+RNX_PCA = coRanking:::R_NX(result_PCA)
+RNX_LLE = coRanking:::R_NX(result_LLE)
+RNX_tSNE = coRanking:::R_NX(result_tSNE)
+RNX_UMAP = coRanking:::R_NX(result_UMAP)
+
+AUC_SRCA = AUC_ln_K(RNX_SRCA)
+AUC_SPCA = AUC_ln_K(RNX_SPCA)
+AUC_PCA = AUC_ln_K(RNX_PCA)
+AUC_LLE = AUC_ln_K(RNX_LLE)
+AUC_tSNE = AUC_ln_K(RNX_tSNE)
+AUC_UMAP = AUC_ln_K(RNX_UMAP)
+
+AUCs = c(AUC_SRCA,AUC_SPCA,AUC_PCA,AUC_LLE,AUC_tSNE,AUC_UMAP)
+save(AUCs, file = "AUC_Alon.rda")
+ 
+AUC_SRCA_uw = mean(RNX_SRCA)
+AUC_SPCA_uw = mean(RNX_SPCA)
+AUC_PCA_uw = mean(RNX_PCA)
+AUC_LLE_uw = mean(RNX_LLE)
+AUC_tSNE_uw = mean(RNX_tSNE)
+AUC_UMAP_uw = mean(RNX_UMAP)
+
+AUCs_uw = c(AUC_SRCA_uw,AUC_SPCA_uw,AUC_PCA_uw,AUC_LLE_uw,AUC_tSNE_uw,AUC_UMAP_uw)
+save(AUCs_uw, file = "AUC_Alon_uw.rda")
+
+
+png(filename="C_Alon.png")
+old.par <- par(mfrow=c(2, 3))
+imageplot(result_SRCA,lwd = 2, bty = "n", main = "SRCA", xlab = expression(R), ylab = expression(Ro), axes = FALSE, legend = FALSE)
+imageplot(result_SPCA,lwd = 2, bty = "n", main = "SPCA", xlab = expression(R), ylab = expression(Ro), axes = FALSE, legend = FALSE)
+imageplot(result_PCA,lwd = 2, bty = "n", main = "PCA", xlab = expression(R), ylab = expression(Ro), axes = FALSE, legend = FALSE)
+imageplot(result_LLE,lwd = 2, bty = "n", main = "LLE", xlab = expression(R), ylab = expression(Ro), axes = FALSE, legend = FALSE)
+imageplot(result_tSNE,lwd = 2, bty = "n", main = "tSNE", xlab = expression(R), ylab = expression(Ro), axes = FALSE, legend = FALSE)
+imageplot(result_UMAP,lwd = 2, bty = "n", main = "UMAP", xlab = expression(R), ylab = expression(Ro),  axes = FALSE, legend = FALSE)
+par(old.par)
+dev.off()
+
+
+png(filename="QNX_Alon.png")
+yrange <- range(c(qnx_SRCA,qnx_SPCA,qnx_PCA,qnx_LLE,qnx_tSNE,qnx_UMAP))
+plot(qnx_SRCA, xlab = "K", ylab = expression(Q[NX]), type = "l", ylim = yrange, col = 1)
+abline(v = Kmax_SRCA, col = 1, lty = 2)
+text(Kmax_SRCA, mean(yrange) + 0.3, expression(K[SRCA]), col = 1, pos = 4)
+
+lines(qnx_SPCA, main = "SPCA", xlab = "K", ylab = expression(Q[NX]), ylim = 0:1, col = 2)
+abline(v = Kmax_SPCA, col = 2, lty = 2)
+text(Kmax_SPCA, mean(yrange) + 0.2, expression(K[SPCA]), col = 2, pos = 4)
+
+lines(qnx_PCA, main = "PCA", xlab = "K", ylab = expression(Q[NX]), ylim = 0:1, col = 3)
+abline(v = Kmax_PCA, col = 3, lty = 2)
+text(Kmax_PCA, mean(yrange) + 0.1, expression(K[PCA]), col = 3, pos = 4)
+
+lines(qnx_LLE, main = "LLE", xlab = "K", ylab = expression(Q[NX]), ylim = 0:1, col = 4)
+abline(v = Kmax_LLE, col = 4, lty = 2)
+text(Kmax_LLE, mean(yrange) , expression(K[LLE]), col = 4, pos = 4)
+
+lines(qnx_tSNE, main = "tSNE", xlab = "K", ylab = expression(Q[NX]), ylim = 0:1, col = 5)
+abline(v = Kmax_tSNE, col = 5, lty = 2)
+text(Kmax_tSNE, mean(yrange) - 0.1, expression(K[tSNE]), col = 5, pos = 4)
+
+lines(qnx_UMAP, main = "UMAP", xlab = "K", ylab = expression(Q[NX]), ylim = 0:1, col = 6)
+abline(v = Kmax_UMAP, col = 6, lty = 2)
+text(Kmax_UMAP, mean(yrange) - 0.2, expression(K[UMAP]), col = 6, pos = 4)
+
+legend("bottomright", legend = c("SRCA", "SPCA", "PCA", "LLE", "tSNE", "UMAP"), lty = 1, col = 1:6)
+title("Q_NX",line = -1, outer = TRUE)
+dev.off()
+
+
+
+
+png(filename="LCMC_Alon.png")
+yrange <- range(c(lcmc_SRCA,lcmc_SPCA,lcmc_PCA,lcmc_LLE,lcmc_tSNE,lcmc_UMAP))
+plot(lcmc_SRCA, xlab = "K", ylab = expression(LCMC), type = "l", ylim = yrange, col = 1)
+lines(lcmc_SPCA, main = "SPCA", xlab = "K", ylab = expression(LCMC), ylim = 0:1, col = 2)
+lines(lcmc_PCA, main = "PCA", xlab = "K", ylab = expression(LCMC), ylim = 0:1, col = 3)
+lines(lcmc_LLE, main = "LLE", xlab = "K", ylab = expression(LCMC), ylim = 0:1, col = 4)
+lines(lcmc_tSNE, main = "tSNE", xlab = "K", ylab = expression(LCMC), ylim = 0:1, col = 5)
+lines(lcmc_UMAP, main = "UMAP", xlab = "K", ylab = expression(LCMC), ylim = 0:1, col = 6)
+legend("bottomright", legend = c("SRCA", "SPCA", "PCA", "LLE", "tSNE", "UMAP"), lty = 1, col = 1:6)
+title("LCMC_NX",line = -1, outer = TRUE)
+dev.off()
+
+
+png(filename="RNX_Alon.png")
+yrange <- range(c(RNX_SRCA,RNX_SPCA,RNX_PCA,RNX_LLE,RNX_tSNE,RNX_UMAP))
+plot(RNX_SRCA, xlab = "K", ylab = expression(LCMC), type = "l", ylim = yrange, col = 1)
+lines(RNX_SPCA, main = "SPCA", xlab = "K", ylab = expression(LCMC), ylim = 0:1, col = 2)
+lines(RNX_PCA, main = "PCA", xlab = "K", ylab = expression(LCMC), ylim = 0:1, col = 3)
+lines(RNX_LLE, main = "LLE", xlab = "K", ylab = expression(LCMC), ylim = 0:1, col = 4)
+lines(RNX_tSNE, main = "tSNE", xlab = "K", ylab = expression(LCMC), ylim = 0:1, col = 5)
+lines(RNX_UMAP, main = "UMAP", xlab = "K", ylab = expression(LCMC), ylim = 0:1, col = 6)
+legend("bottomright", legend = c("SRCA", "SPCA", "PCA", "LLE", "tSNE", "UMAP"), lty = 1, col = 1:6)
+title("R_NX",line = -1, outer = TRUE)
+dev.off()
+
+
+
+
+Q_loc = c(Q_local(qnx_SRCA,Kmax_SRCA),Q_local(qnx_SPCA,Kmax_SPCA),Q_local(qnx_PCA,Kmax_PCA),Q_local(qnx_LLE,Kmax_LLE),Q_local(qnx_tSNE,Kmax_tSNE),Q_local(qnx_UMAP,Kmax_UMAP))
+Q_glob = c(Q_global(qnx_SRCA,Kmax_SRCA),Q_global(qnx_SPCA,Kmax_SPCA),Q_global(qnx_PCA,Kmax_PCA),Q_global(qnx_LLE,Kmax_LLE),Q_global(qnx_tSNE,Kmax_tSNE),Q_global(qnx_UMAP,Kmax_UMAP))
+save(Q_loc, file = "Q_local_Alon.rda")
+save(Q_glob, file = "Q_global_Alon.rda")
+
+Cop_SRCA = cor(as.vector(D),as.vector(D_SRCA))
+Cop_SPCA = cor(as.vector(D),as.vector(D_SPCA))
+Cop_PCA = cor(as.vector(D),as.vector(D_PCA))
+Cop_LLE = cor(as.vector(D),as.vector(D_LLE))
+Cop_tSNE = cor(as.vector(D),as.vector(D_tSNE))
+Cop_UMAP = cor(as.vector(D),as.vector(D_UMAP))
+Cop = c(Cop_SRCA,Cop_SPCA,Cop_PCA,Cop_LLE,Cop_tSNE,Cop_UMAP)
+save(Cop, file = "Cop_Alon.rda")
+```
+
+
+
+
+
+## Plane
+```{r cars}
+library(dimRed)
+library(coRanking)
+library(rdist)
+setwd("~/Documents/GitHub/SPCA/code_method_Final/SRCA/Plane")
+data <- read.csv('Plane.csv',header = FALSE)
+output_PCA = read.csv('Plane_output_PCA.csv',header = FALSE)
+output_SRCA = read.csv('Plane_output_SRCA.csv',header = FALSE)
+output_SPCA = read.csv('Plane_output_SPCA.csv',header = FALSE)
+output_LLE = read.csv('Plane_output_LLE.csv',header = FALSE)
+output_tSNE = read.csv('Plane_output_tSNE.csv',header = FALSE)
+output_UMAP = read.csv('Plane_output_UMAP.csv',header = FALSE)
+
+
+D = pdist(data, metric = "euclidean", p = 2)
+D_SRCA = pdist(output_SRCA, metric = "euclidean", p = 2)
+D_SPCA = pdist(output_SPCA, metric = "euclidean", p = 2)
+D_PCA = pdist(output_PCA, metric = "euclidean", p = 2)
+D_LLE = pdist(output_LLE, metric = "euclidean", p = 2)
+D_tSNE = pdist(output_tSNE, metric = "euclidean", p = 2)
+D_UMAP = pdist(output_UMAP, metric = "euclidean", p = 2)
+
+
+result_SRCA = coranking( data, output_SRCA, input_Xi = "data", input_X = "data", use = "C" )
+result_SPCA = coranking( data, output_SPCA, input_Xi = "data", input_X = "data", use = "C" )
+result_PCA = coranking( data, output_PCA, input_Xi = "data", input_X = "data", use = "C" )
+result_LLE = coranking( data, output_LLE, input_Xi = "data", input_X = "data", use = "C" )
+result_tSNE = coranking( data, output_tSNE, input_Xi = "data", input_X = "data", use = "C" )
+result_UMAP = coranking( data, output_UMAP, input_Xi = "data", input_X = "data", use = "C" )
+
+
+qnx_SRCA = coRanking:::Q_NX(result_SRCA)
+qnx_SPCA = coRanking:::Q_NX(result_SPCA)
+qnx_PCA = coRanking:::Q_NX(result_PCA)
+qnx_LLE = coRanking:::Q_NX(result_LLE)
+qnx_tSNE = coRanking:::Q_NX(result_tSNE)
+qnx_UMAP = coRanking:::Q_NX(result_UMAP)
+
+
+
+lcmc_SRCA = LCMC(result_SRCA)
+lcmc_SPCA = LCMC(result_SPCA)
+lcmc_PCA = LCMC(result_PCA)
+lcmc_LLE = LCMC(result_LLE)
+lcmc_tSNE = LCMC(result_tSNE)
+lcmc_UMAP = LCMC(result_UMAP)
+
+Kmax_SRCA <- which.max(lcmc_SRCA)
+Kmax_SPCA <- which.max(lcmc_SPCA)
+Kmax_PCA <- which.max(lcmc_PCA)
+Kmax_LLE <- which.max(lcmc_LLE)
+Kmax_tSNE <- which.max(lcmc_tSNE)
+Kmax_UMAP <- which.max(lcmc_UMAP)
+
+RNX_SRCA = coRanking:::R_NX(result_SRCA)
+RNX_SPCA = coRanking:::R_NX(result_SPCA)
+RNX_PCA = coRanking:::R_NX(result_PCA)
+RNX_LLE = coRanking:::R_NX(result_LLE)
+RNX_tSNE = coRanking:::R_NX(result_tSNE)
+RNX_UMAP = coRanking:::R_NX(result_UMAP)
+
+AUC_SRCA = AUC_ln_K(RNX_SRCA)
+AUC_SPCA = AUC_ln_K(RNX_SPCA)
+AUC_PCA = AUC_ln_K(RNX_PCA)
+AUC_LLE = AUC_ln_K(RNX_LLE)
+AUC_tSNE = AUC_ln_K(RNX_tSNE)
+AUC_UMAP = AUC_ln_K(RNX_UMAP)
+
+AUCs = c(AUC_SRCA,AUC_SPCA,AUC_PCA,AUC_LLE,AUC_tSNE,AUC_UMAP)
+save(AUCs, file = "AUC_Plane.rda")
+ 
+AUC_SRCA_uw = mean(RNX_SRCA)
+AUC_SPCA_uw = mean(RNX_SPCA)
+AUC_PCA_uw = mean(RNX_PCA)
+AUC_LLE_uw = mean(RNX_LLE)
+AUC_tSNE_uw = mean(RNX_tSNE)
+AUC_UMAP_uw = mean(RNX_UMAP)
+
+AUCs_uw = c(AUC_SRCA_uw,AUC_SPCA_uw,AUC_PCA_uw,AUC_LLE_uw,AUC_tSNE_uw,AUC_UMAP_uw)
+save(AUCs_uw, file = "AUC_Plane_uw.rda")
+
+
+png(filename="C_Plane.png")
+old.par <- par(mfrow=c(2, 3))
+imageplot(result_SRCA,lwd = 2, bty = "n", main = "SRCA", xlab = expression(R), ylab = expression(Ro), axes = FALSE, legend = FALSE)
+imageplot(result_SPCA,lwd = 2, bty = "n", main = "SPCA", xlab = expression(R), ylab = expression(Ro), axes = FALSE, legend = FALSE)
+imageplot(result_PCA,lwd = 2, bty = "n", main = "PCA", xlab = expression(R), ylab = expression(Ro), axes = FALSE, legend = FALSE)
+imageplot(result_LLE,lwd = 2, bty = "n", main = "LLE", xlab = expression(R), ylab = expression(Ro), axes = FALSE, legend = FALSE)
+imageplot(result_tSNE,lwd = 2, bty = "n", main = "tSNE", xlab = expression(R), ylab = expression(Ro), axes = FALSE, legend = FALSE)
+imageplot(result_UMAP,lwd = 2, bty = "n", main = "UMAP", xlab = expression(R), ylab = expression(Ro),  axes = FALSE, legend = FALSE)
+par(old.par)
+dev.off()
+
+
+png(filename="QNX_Plane.png")
+yrange <- range(c(qnx_SRCA,qnx_SPCA,qnx_PCA,qnx_LLE,qnx_tSNE,qnx_UMAP))
+plot(qnx_SRCA, xlab = "K", ylab = expression(Q[NX]), type = "l", ylim = yrange, col = 1)
+abline(v = Kmax_SRCA, col = 1, lty = 2)
+text(Kmax_SRCA, mean(yrange) + 0.3, expression(K[SRCA]), col = 1, pos = 4)
+
+lines(qnx_SPCA, main = "SPCA", xlab = "K", ylab = expression(Q[NX]), ylim = 0:1, col = 2)
+abline(v = Kmax_SPCA, col = 2, lty = 2)
+text(Kmax_SPCA, mean(yrange) + 0.2, expression(K[SPCA]), col = 2, pos = 4)
+
+lines(qnx_PCA, main = "PCA", xlab = "K", ylab = expression(Q[NX]), ylim = 0:1, col = 3)
+abline(v = Kmax_PCA, col = 3, lty = 2)
+text(Kmax_PCA, mean(yrange) + 0.1, expression(K[PCA]), col = 3, pos = 4)
+
+lines(qnx_LLE, main = "LLE", xlab = "K", ylab = expression(Q[NX]), ylim = 0:1, col = 4)
+abline(v = Kmax_LLE, col = 4, lty = 2)
+text(Kmax_LLE, mean(yrange) , expression(K[LLE]), col = 4, pos = 4)
+
+lines(qnx_tSNE, main = "tSNE", xlab = "K", ylab = expression(Q[NX]), ylim = 0:1, col = 5)
+abline(v = Kmax_tSNE, col = 5, lty = 2)
+text(Kmax_tSNE, mean(yrange) - 0.1, expression(K[tSNE]), col = 5, pos = 4)
+
+lines(qnx_UMAP, main = "UMAP", xlab = "K", ylab = expression(Q[NX]), ylim = 0:1, col = 6)
+abline(v = Kmax_UMAP, col = 6, lty = 2)
+text(Kmax_UMAP, mean(yrange) - 0.2, expression(K[UMAP]), col = 6, pos = 4)
+
+legend("bottomright", legend = c("SRCA", "SPCA", "PCA", "LLE", "tSNE", "UMAP"), lty = 1, col = 1:6)
+title("Q_NX",line = -1, outer = TRUE)
+dev.off()
+
+
+
+
+png(filename="LCMC_Plane.png")
+yrange <- range(c(lcmc_SRCA,lcmc_SPCA,lcmc_PCA,lcmc_LLE,lcmc_tSNE,lcmc_UMAP))
+plot(lcmc_SRCA, xlab = "K", ylab = expression(LCMC), type = "l", ylim = yrange, col = 1)
+lines(lcmc_SPCA, main = "SPCA", xlab = "K", ylab = expression(LCMC), ylim = 0:1, col = 2)
+lines(lcmc_PCA, main = "PCA", xlab = "K", ylab = expression(LCMC), ylim = 0:1, col = 3)
+lines(lcmc_LLE, main = "LLE", xlab = "K", ylab = expression(LCMC), ylim = 0:1, col = 4)
+lines(lcmc_tSNE, main = "tSNE", xlab = "K", ylab = expression(LCMC), ylim = 0:1, col = 5)
+lines(lcmc_UMAP, main = "UMAP", xlab = "K", ylab = expression(LCMC), ylim = 0:1, col = 6)
+legend("bottomright", legend = c("SRCA", "SPCA", "PCA", "LLE", "tSNE", "UMAP"), lty = 1, col = 1:6)
+title("LCMC_NX",line = -1, outer = TRUE)
+dev.off()
+
+
+png(filename="RNX_Plane.png")
+yrange <- range(c(RNX_SRCA,RNX_SPCA,RNX_PCA,RNX_LLE,RNX_tSNE,RNX_UMAP))
+plot(RNX_SRCA, xlab = "K", ylab = expression(LCMC), type = "l", ylim = yrange, col = 1)
+lines(RNX_SPCA, main = "SPCA", xlab = "K", ylab = expression(LCMC), ylim = 0:1, col = 2)
+lines(RNX_PCA, main = "PCA", xlab = "K", ylab = expression(LCMC), ylim = 0:1, col = 3)
+lines(RNX_LLE, main = "LLE", xlab = "K", ylab = expression(LCMC), ylim = 0:1, col = 4)
+lines(RNX_tSNE, main = "tSNE", xlab = "K", ylab = expression(LCMC), ylim = 0:1, col = 5)
+lines(RNX_UMAP, main = "UMAP", xlab = "K", ylab = expression(LCMC), ylim = 0:1, col = 6)
+legend("bottomright", legend = c("SRCA", "SPCA", "PCA", "LLE", "tSNE", "UMAP"), lty = 1, col = 1:6)
+title("R_NX",line = -1, outer = TRUE)
+dev.off()
+
+
+
+
+Q_loc = c(Q_local(qnx_SRCA,Kmax_SRCA),Q_local(qnx_SPCA,Kmax_SPCA),Q_local(qnx_PCA,Kmax_PCA),Q_local(qnx_LLE,Kmax_LLE),Q_local(qnx_tSNE,Kmax_tSNE),Q_local(qnx_UMAP,Kmax_UMAP))
+Q_glob = c(Q_global(qnx_SRCA,Kmax_SRCA),Q_global(qnx_SPCA,Kmax_SPCA),Q_global(qnx_PCA,Kmax_PCA),Q_global(qnx_LLE,Kmax_LLE),Q_global(qnx_tSNE,Kmax_tSNE),Q_global(qnx_UMAP,Kmax_UMAP))
+save(Q_loc, file = "Q_local_Plane.rda")
+save(Q_glob, file = "Q_global_Plane.rda")
+
+Cop_SRCA = cor(as.vector(D),as.vector(D_SRCA))
+Cop_SPCA = cor(as.vector(D),as.vector(D_SPCA))
+Cop_PCA = cor(as.vector(D),as.vector(D_PCA))
+Cop_LLE = cor(as.vector(D),as.vector(D_LLE))
+Cop_tSNE = cor(as.vector(D),as.vector(D_tSNE))
+Cop_UMAP = cor(as.vector(D),as.vector(D_UMAP))
+Cop = c(Cop_SRCA,Cop_SPCA,Cop_PCA,Cop_LLE,Cop_tSNE,Cop_UMAP)
+save(Cop, file = "Cop_Plane.rda")
+```
+
+
+
+## Torus
+```{r cars}
+library(dimRed)
+library(coRanking)
+library(rdist)
+setwd("~/Documents/GitHub/SPCA/code_method_Final/SRCA/Torus")
+data <- read.csv('Torus.csv',header = FALSE)
+output_PCA = read.csv('Torus_output_PCA.csv',header = FALSE)
+output_SRCA = read.csv('Torus_output_SRCA.csv',header = FALSE)
+output_SPCA = read.csv('Torus_output_SPCA.csv',header = FALSE)
+output_LLE = read.csv('Torus_output_LLE.csv',header = FALSE)
+output_tSNE = read.csv('Torus_output_tSNE.csv',header = FALSE)
+output_UMAP = read.csv('Torus_output_UMAP.csv',header = FALSE)
+
+D = pdist(data, metric = "euclidean", p = 2)
+D_SRCA = pdist(output_SRCA, metric = "euclidean", p = 2)
+D_SPCA = pdist(output_SPCA, metric = "euclidean", p = 2)
+D_PCA = pdist(output_PCA, metric = "euclidean", p = 2)
+D_LLE = pdist(output_LLE, metric = "euclidean", p = 2)
+D_tSNE = pdist(output_tSNE, metric = "euclidean", p = 2)
+D_UMAP = pdist(output_UMAP, metric = "euclidean", p = 2)
+
+
+result_SRCA = coranking( data, output_SRCA, input_Xi = "data", input_X = "data", use = "C" )
+result_SPCA = coranking( data, output_SPCA, input_Xi = "data", input_X = "data", use = "C" )
+result_PCA = coranking( data, output_PCA, input_Xi = "data", input_X = "data", use = "C" )
+result_LLE = coranking( data, output_LLE, input_Xi = "data", input_X = "data", use = "C" )
+result_tSNE = coranking( data, output_tSNE, input_Xi = "data", input_X = "data", use = "C" )
+result_UMAP = coranking( data, output_UMAP, input_Xi = "data", input_X = "data", use = "C" )
+
+
+qnx_SRCA = coRanking:::Q_NX(result_SRCA)
+qnx_SPCA = coRanking:::Q_NX(result_SPCA)
+qnx_PCA = coRanking:::Q_NX(result_PCA)
+qnx_LLE = coRanking:::Q_NX(result_LLE)
+qnx_tSNE = coRanking:::Q_NX(result_tSNE)
+qnx_UMAP = coRanking:::Q_NX(result_UMAP)
+
+
+
+lcmc_SRCA = LCMC(result_SRCA)
+lcmc_SPCA = LCMC(result_SPCA)
+lcmc_PCA = LCMC(result_PCA)
+lcmc_LLE = LCMC(result_LLE)
+lcmc_tSNE = LCMC(result_tSNE)
+lcmc_UMAP = LCMC(result_UMAP)
+
+Kmax_SRCA <- which.max(lcmc_SRCA)
+Kmax_SPCA <- which.max(lcmc_SPCA)
+Kmax_PCA <- which.max(lcmc_PCA)
+Kmax_LLE <- which.max(lcmc_LLE)
+Kmax_tSNE <- which.max(lcmc_tSNE)
+Kmax_UMAP <- which.max(lcmc_UMAP)
+
+RNX_SRCA = coRanking:::R_NX(result_SRCA)
+RNX_SPCA = coRanking:::R_NX(result_SPCA)
+RNX_PCA = coRanking:::R_NX(result_PCA)
+RNX_LLE = coRanking:::R_NX(result_LLE)
+RNX_tSNE = coRanking:::R_NX(result_tSNE)
+RNX_UMAP = coRanking:::R_NX(result_UMAP)
+
+AUC_SRCA = AUC_ln_K(RNX_SRCA)
+AUC_SPCA = AUC_ln_K(RNX_SPCA)
+AUC_PCA = AUC_ln_K(RNX_PCA)
+AUC_LLE = AUC_ln_K(RNX_LLE)
+AUC_tSNE = AUC_ln_K(RNX_tSNE)
+AUC_UMAP = AUC_ln_K(RNX_UMAP)
+
+AUCs = c(AUC_SRCA,AUC_SPCA,AUC_PCA,AUC_LLE,AUC_tSNE,AUC_UMAP)
+save(AUCs, file = "AUC_Torus.rda")
+ 
+AUC_SRCA_uw = mean(RNX_SRCA)
+AUC_SPCA_uw = mean(RNX_SPCA)
+AUC_PCA_uw = mean(RNX_PCA)
+AUC_LLE_uw = mean(RNX_LLE)
+AUC_tSNE_uw = mean(RNX_tSNE)
+AUC_UMAP_uw = mean(RNX_UMAP)
+
+AUCs_uw = c(AUC_SRCA_uw,AUC_SPCA_uw,AUC_PCA_uw,AUC_LLE_uw,AUC_tSNE_uw,AUC_UMAP_uw)
+save(AUCs_uw, file = "AUC_Torus_uw.rda")
+
+
+png(filename="C_Torus.png")
+old.par <- par(mfrow=c(2, 3))
+imageplot(result_SRCA,lwd = 2, bty = "n", main = "SRCA", xlab = expression(R), ylab = expression(Ro), axes = FALSE, legend = FALSE)
+imageplot(result_SPCA,lwd = 2, bty = "n", main = "SPCA", xlab = expression(R), ylab = expression(Ro), axes = FALSE, legend = FALSE)
+imageplot(result_PCA,lwd = 2, bty = "n", main = "PCA", xlab = expression(R), ylab = expression(Ro), axes = FALSE, legend = FALSE)
+imageplot(result_LLE,lwd = 2, bty = "n", main = "LLE", xlab = expression(R), ylab = expression(Ro), axes = FALSE, legend = FALSE)
+imageplot(result_tSNE,lwd = 2, bty = "n", main = "tSNE", xlab = expression(R), ylab = expression(Ro), axes = FALSE, legend = FALSE)
+imageplot(result_UMAP,lwd = 2, bty = "n", main = "UMAP", xlab = expression(R), ylab = expression(Ro),  axes = FALSE, legend = FALSE)
+par(old.par)
+dev.off()
+
+
+png(filename="QNX_Torus.png")
+yrange <- range(c(qnx_SRCA,qnx_SPCA,qnx_PCA,qnx_LLE,qnx_tSNE,qnx_UMAP))
+plot(qnx_SRCA, xlab = "K", ylab = expression(Q[NX]), type = "l", ylim = yrange, col = 1)
+abline(v = Kmax_SRCA, col = 1, lty = 2)
+text(Kmax_SRCA, mean(yrange) + 0.3, expression(K[SRCA]), col = 1, pos = 4)
+
+lines(qnx_SPCA, main = "SPCA", xlab = "K", ylab = expression(Q[NX]), ylim = 0:1, col = 2)
+abline(v = Kmax_SPCA, col = 2, lty = 2)
+text(Kmax_SPCA, mean(yrange) + 0.2, expression(K[SPCA]), col = 2, pos = 4)
+
+lines(qnx_PCA, main = "PCA", xlab = "K", ylab = expression(Q[NX]), ylim = 0:1, col = 3)
+abline(v = Kmax_PCA, col = 3, lty = 2)
+text(Kmax_PCA, mean(yrange) + 0.1, expression(K[PCA]), col = 3, pos = 4)
+
+lines(qnx_LLE, main = "LLE", xlab = "K", ylab = expression(Q[NX]), ylim = 0:1, col = 4)
+abline(v = Kmax_LLE, col = 4, lty = 2)
+text(Kmax_LLE, mean(yrange) , expression(K[LLE]), col = 4, pos = 4)
+
+lines(qnx_tSNE, main = "tSNE", xlab = "K", ylab = expression(Q[NX]), ylim = 0:1, col = 5)
+abline(v = Kmax_tSNE, col = 5, lty = 2)
+text(Kmax_tSNE, mean(yrange) - 0.1, expression(K[tSNE]), col = 5, pos = 4)
+
+lines(qnx_UMAP, main = "UMAP", xlab = "K", ylab = expression(Q[NX]), ylim = 0:1, col = 6)
+abline(v = Kmax_UMAP, col = 6, lty = 2)
+text(Kmax_UMAP, mean(yrange) - 0.2, expression(K[UMAP]), col = 6, pos = 4)
+legend("bottomright", legend = c("SRCA", "SPCA", "PCA", "LLE", "tSNE", "UMAP"), lty = 1, col = 1:6)
+title("Q_NX",line = -1, outer = TRUE)
+dev.off()
+
+
+
+
+png(filename="LCMC_Torus.png")
+yrange <- range(c(lcmc_SRCA,lcmc_SPCA,lcmc_PCA,lcmc_LLE,lcmc_tSNE,lcmc_UMAP))
+plot(lcmc_SRCA, xlab = "K", ylab = expression(LCMC), type = "l", ylim = yrange, col = 1)
+lines(lcmc_SPCA, main = "SPCA", xlab = "K", ylab = expression(LCMC), ylim = 0:1, col = 2)
+lines(lcmc_PCA, main = "PCA", xlab = "K", ylab = expression(LCMC), ylim = 0:1, col = 3)
+lines(lcmc_LLE, main = "LLE", xlab = "K", ylab = expression(LCMC), ylim = 0:1, col = 4)
+lines(lcmc_tSNE, main = "tSNE", xlab = "K", ylab = expression(LCMC), ylim = 0:1, col = 5)
+lines(lcmc_UMAP, main = "UMAP", xlab = "K", ylab = expression(LCMC), ylim = 0:1, col = 6)
+legend("bottomright", legend = c("SRCA", "SPCA", "PCA", "LLE", "tSNE", "UMAP"), lty = 1, col = 1:6)
+title("LCMC_NX",line = -1, outer = TRUE)
+dev.off()
+
+
+png(filename="RNX_Torus.png")
+yrange <- range(c(RNX_SRCA,RNX_SPCA,RNX_PCA,RNX_LLE,RNX_tSNE,RNX_UMAP))
+plot(RNX_SRCA, xlab = "K", ylab = expression(LCMC), type = "l", ylim = yrange, col = 1)
+lines(RNX_SPCA, main = "SPCA", xlab = "K", ylab = expression(LCMC), ylim = 0:1, col = 2)
+lines(RNX_PCA, main = "PCA", xlab = "K", ylab = expression(LCMC), ylim = 0:1, col = 3)
+lines(RNX_LLE, main = "LLE", xlab = "K", ylab = expression(LCMC), ylim = 0:1, col = 4)
+lines(RNX_tSNE, main = "tSNE", xlab = "K", ylab = expression(LCMC), ylim = 0:1, col = 5)
+lines(RNX_UMAP, main = "UMAP", xlab = "K", ylab = expression(LCMC), ylim = 0:1, col = 6)
+legend("bottomright", legend = c("SRCA", "SPCA", "PCA", "LLE", "tSNE", "UMAP"), lty = 1, col = 1:6)
+title("R_NX",line = -1, outer = TRUE)
+dev.off()
+
+
+
+
+Q_loc = c(Q_local(qnx_SRCA,Kmax_SRCA),Q_local(qnx_SPCA,Kmax_SPCA),Q_local(qnx_PCA,Kmax_PCA),Q_local(qnx_LLE,Kmax_LLE),Q_local(qnx_tSNE,Kmax_tSNE),Q_local(qnx_UMAP,Kmax_UMAP))
+Q_glob = c(Q_global(qnx_SRCA,Kmax_SRCA),Q_global(qnx_SPCA,Kmax_SPCA),Q_global(qnx_PCA,Kmax_PCA),Q_global(qnx_LLE,Kmax_LLE),Q_global(qnx_tSNE,Kmax_tSNE),Q_global(qnx_UMAP,Kmax_UMAP))
+save(Q_loc, file = "Q_local_Torus.rda")
+save(Q_glob, file = "Q_global_Torus.rda")
+
+Cop_SRCA = cor(as.vector(D),as.vector(D_SRCA))
+Cop_SPCA = cor(as.vector(D),as.vector(D_SPCA))
+Cop_PCA = cor(as.vector(D),as.vector(D_PCA))
+Cop_LLE = cor(as.vector(D),as.vector(D_LLE))
+Cop_tSNE = cor(as.vector(D),as.vector(D_tSNE))
+Cop_UMAP = cor(as.vector(D),as.vector(D_UMAP))
+Cop = c(Cop_SRCA,Cop_SPCA,Cop_PCA,Cop_LLE,Cop_tSNE,Cop_UMAP)
+save(Cop, file = "Cop_Torus.rda")
+```
+
+
+
+
+
+## Sphere
+```{r cars}
+library(dimRed)
+library(coRanking)
+library(rdist)
+setwd("~/Documents/GitHub/SPCA/code_method_Final/SRCA/Sphere")
+data <- read.csv('Sphere.csv',header = FALSE)
+output_PCA = read.csv('Sphere_output_PCA.csv',header = FALSE)
+output_SRCA = read.csv('Sphere_output_SRCA.csv',header = FALSE)
+output_SPCA = read.csv('Sphere_output_SPCA.csv',header = FALSE)
+output_LLE = read.csv('Sphere_output_LLE.csv',header = FALSE)
+output_tSNE = read.csv('Sphere_output_tSNE.csv',header = FALSE)
+output_UMAP = read.csv('Sphere_output_UMAP.csv',header = FALSE)
+
+
+D = pdist(data, metric = "euclidean", p = 2)
+D_SRCA = pdist(output_SRCA, metric = "euclidean", p = 2)
+D_SPCA = pdist(output_SPCA, metric = "euclidean", p = 2)
+D_PCA = pdist(output_PCA, metric = "euclidean", p = 2)
+D_LLE = pdist(output_LLE, metric = "euclidean", p = 2)
+D_tSNE = pdist(output_tSNE, metric = "euclidean", p = 2)
+D_UMAP = pdist(output_UMAP, metric = "euclidean", p = 2)
+
+
+result_SRCA = coranking( data, output_SRCA, input_Xi = "data", input_X = "data", use = "C" )
+result_SPCA = coranking( data, output_SPCA, input_Xi = "data", input_X = "data", use = "C" )
+result_PCA = coranking( data, output_PCA, input_Xi = "data", input_X = "data", use = "C" )
+result_LLE = coranking( data, output_LLE, input_Xi = "data", input_X = "data", use = "C" )
+result_tSNE = coranking( data, output_tSNE, input_Xi = "data", input_X = "data", use = "C" )
+result_UMAP = coranking( data, output_UMAP, input_Xi = "data", input_X = "data", use = "C" )
+
+
+qnx_SRCA = coRanking:::Q_NX(result_SRCA)
+qnx_SPCA = coRanking:::Q_NX(result_SPCA)
+qnx_PCA = coRanking:::Q_NX(result_PCA)
+qnx_LLE = coRanking:::Q_NX(result_LLE)
+qnx_tSNE = coRanking:::Q_NX(result_tSNE)
+qnx_UMAP = coRanking:::Q_NX(result_UMAP)
+
+
+
+lcmc_SRCA = LCMC(result_SRCA)
+lcmc_SPCA = LCMC(result_SPCA)
+lcmc_PCA = LCMC(result_PCA)
+lcmc_LLE = LCMC(result_LLE)
+lcmc_tSNE = LCMC(result_tSNE)
+lcmc_UMAP = LCMC(result_UMAP)
+
+Kmax_SRCA <- which.max(lcmc_SRCA)
+Kmax_SPCA <- which.max(lcmc_SPCA)
+Kmax_PCA <- which.max(lcmc_PCA)
+Kmax_LLE <- which.max(lcmc_LLE)
+Kmax_tSNE <- which.max(lcmc_tSNE)
+Kmax_UMAP <- which.max(lcmc_UMAP)
+
+RNX_SRCA = coRanking:::R_NX(result_SRCA)
+RNX_SPCA = coRanking:::R_NX(result_SPCA)
+RNX_PCA = coRanking:::R_NX(result_PCA)
+RNX_LLE = coRanking:::R_NX(result_LLE)
+RNX_tSNE = coRanking:::R_NX(result_tSNE)
+RNX_UMAP = coRanking:::R_NX(result_UMAP)
+
+AUC_SRCA = AUC_ln_K(RNX_SRCA)
+AUC_SPCA = AUC_ln_K(RNX_SPCA)
+AUC_PCA = AUC_ln_K(RNX_PCA)
+AUC_LLE = AUC_ln_K(RNX_LLE)
+AUC_tSNE = AUC_ln_K(RNX_tSNE)
+AUC_UMAP = AUC_ln_K(RNX_UMAP)
+AUCs = c(AUC_SRCA,AUC_SPCA,AUC_PCA,AUC_LLE,AUC_tSNE,AUC_UMAP)
+save(AUCs, file = "AUC_Sphere.rda")
+ 
+AUC_SRCA_uw = mean(RNX_SRCA)
+AUC_SPCA_uw = mean(RNX_SPCA)
+AUC_PCA_uw = mean(RNX_PCA)
+AUC_LLE_uw = mean(RNX_LLE)
+AUC_tSNE_uw = mean(RNX_tSNE)
+AUC_UMAP_uw = mean(RNX_UMAP)
+
+AUCs_uw = c(AUC_SRCA_uw,AUC_SPCA_uw,AUC_PCA_uw,AUC_LLE_uw,AUC_tSNE_uw,AUC_UMAP_uw)
+save(AUCs_uw, file = "AUC_Sphere_uw.rda")
+
+
+png(filename="C_Sphere.png")
+old.par <- par(mfrow=c(2, 3))
+imageplot(result_SRCA,lwd = 2, bty = "n", main = "SRCA", xlab = expression(R), ylab = expression(Ro), axes = FALSE, legend = FALSE)
+imageplot(result_SPCA,lwd = 2, bty = "n", main = "SPCA", xlab = expression(R), ylab = expression(Ro), axes = FALSE, legend = FALSE)
+imageplot(result_PCA,lwd = 2, bty = "n", main = "PCA", xlab = expression(R), ylab = expression(Ro), axes = FALSE, legend = FALSE)
+imageplot(result_LLE,lwd = 2, bty = "n", main = "LLE", xlab = expression(R), ylab = expression(Ro), axes = FALSE, legend = FALSE)
+imageplot(result_tSNE,lwd = 2, bty = "n", main = "tSNE", xlab = expression(R), ylab = expression(Ro), axes = FALSE, legend = FALSE)
+imageplot(result_UMAP,lwd = 2, bty = "n", main = "UMAP", xlab = expression(R), ylab = expression(Ro),  axes = FALSE, legend = FALSE)
+par(old.par)
+dev.off()
+
+
+png(filename="QNX_Sphere.png")
+yrange <- range(c(qnx_SRCA,qnx_SPCA,qnx_PCA,qnx_LLE,qnx_tSNE,qnx_UMAP))
+plot(qnx_SRCA, xlab = "K", ylab = expression(Q[NX]), type = "l", ylim = yrange, col = 1)
+abline(v = Kmax_SRCA, col = 1, lty = 2)
+text(Kmax_SRCA, mean(yrange) + 0.3, expression(K[SRCA]), col = 1, pos = 4)
+
+lines(qnx_SPCA, main = "SPCA", xlab = "K", ylab = expression(Q[NX]), ylim = 0:1, col = 2)
+abline(v = Kmax_SPCA, col = 2, lty = 2)
+text(Kmax_SPCA, mean(yrange) + 0.2, expression(K[SPCA]), col = 2, pos = 4)
+
+lines(qnx_PCA, main = "PCA", xlab = "K", ylab = expression(Q[NX]), ylim = 0:1, col = 3)
+abline(v = Kmax_PCA, col = 3, lty = 2)
+text(Kmax_PCA, mean(yrange) + 0.1, expression(K[PCA]), col = 3, pos = 4)
+
+lines(qnx_LLE, main = "LLE", xlab = "K", ylab = expression(Q[NX]), ylim = 0:1, col = 4)
+abline(v = Kmax_LLE, col = 4, lty = 2)
+text(Kmax_LLE, mean(yrange) , expression(K[LLE]), col = 4, pos = 4)
+
+lines(qnx_tSNE, main = "tSNE", xlab = "K", ylab = expression(Q[NX]), ylim = 0:1, col = 5)
+abline(v = Kmax_tSNE, col = 5, lty = 2)
+text(Kmax_tSNE, mean(yrange) - 0.1, expression(K[tSNE]), col = 5, pos = 4)
+
+lines(qnx_UMAP, main = "UMAP", xlab = "K", ylab = expression(Q[NX]), ylim = 0:1, col = 6)
+abline(v = Kmax_UMAP, col = 6, lty = 2)
+text(Kmax_UMAP, mean(yrange) - 0.2, expression(K[UMAP]), col = 6, pos = 4)
+
+
+legend("bottomright", legend = c("SRCA", "SPCA", "PCA", "LLE", "tSNE", "UMAP"), lty = 1, col = 1:6)
+title("Q_NX",line = -1, outer = TRUE)
+dev.off()
+
+
+
+
+png(filename="LCMC_Sphere.png")
+yrange <- range(c(lcmc_SRCA,lcmc_SPCA,lcmc_PCA,lcmc_LLE,lcmc_tSNE,lcmc_UMAP))
+plot(lcmc_SRCA, xlab = "K", ylab = expression(LCMC), type = "l", ylim = yrange, col = 1)
+lines(lcmc_SPCA, main = "SPCA", xlab = "K", ylab = expression(LCMC), ylim = 0:1, col = 2)
+lines(lcmc_PCA, main = "PCA", xlab = "K", ylab = expression(LCMC), ylim = 0:1, col = 3)
+lines(lcmc_LLE, main = "LLE", xlab = "K", ylab = expression(LCMC), ylim = 0:1, col = 4)
+lines(lcmc_tSNE, main = "tSNE", xlab = "K", ylab = expression(LCMC), ylim = 0:1, col = 5)
+lines(lcmc_UMAP, main = "UMAP", xlab = "K", ylab = expression(LCMC), ylim = 0:1, col = 6)
+legend("bottomright", legend = c("SRCA", "SPCA", "PCA", "LLE", "tSNE", "UMAP"), lty = 1, col = 1:6)
+title("LCMC_NX",line = -1, outer = TRUE)
+dev.off()
+
+
+png(filename="RNX_Sphere.png")
+yrange <- range(c(RNX_SRCA,RNX_SPCA,RNX_PCA,RNX_LLE,RNX_tSNE,RNX_UMAP))
+plot(RNX_SRCA, xlab = "K", ylab = expression(LCMC), type = "l", ylim = yrange, col = 1)
+lines(RNX_SPCA, main = "SPCA", xlab = "K", ylab = expression(LCMC), ylim = 0:1, col = 2)
+lines(RNX_PCA, main = "PCA", xlab = "K", ylab = expression(LCMC), ylim = 0:1, col = 3)
+lines(RNX_LLE, main = "LLE", xlab = "K", ylab = expression(LCMC), ylim = 0:1, col = 4)
+lines(RNX_tSNE, main = "tSNE", xlab = "K", ylab = expression(LCMC), ylim = 0:1, col = 5)
+lines(RNX_UMAP, main = "UMAP", xlab = "K", ylab = expression(LCMC), ylim = 0:1, col = 6)
+legend("bottomright", legend = c("SRCA", "SPCA", "PCA", "LLE", "tSNE", "UMAP"), lty = 1, col = 1:6)
+title("R_NX",line = -1, outer = TRUE)
+dev.off()
+
+
+
+
+Q_loc = c(Q_local(qnx_SRCA,Kmax_SRCA),Q_local(qnx_SPCA,Kmax_SPCA),Q_local(qnx_PCA,Kmax_PCA),Q_local(qnx_LLE,Kmax_LLE),Q_local(qnx_tSNE,Kmax_tSNE),Q_local(qnx_UMAP,Kmax_UMAP))
+Q_glob = c(Q_global(qnx_SRCA,Kmax_SRCA),Q_global(qnx_SPCA,Kmax_SPCA),Q_global(qnx_PCA,Kmax_PCA),Q_global(qnx_LLE,Kmax_LLE),Q_global(qnx_tSNE,Kmax_tSNE),Q_global(qnx_UMAP,Kmax_UMAP))
+save(Q_loc, file = "Q_local_Sphere.rda")
+save(Q_glob, file = "Q_global_Sphere.rda")
+
+Cop_SRCA = cor(as.vector(D),as.vector(D_SRCA))
+Cop_SPCA = cor(as.vector(D),as.vector(D_SPCA))
+Cop_PCA = cor(as.vector(D),as.vector(D_PCA))
+Cop_LLE = cor(as.vector(D),as.vector(D_LLE))
+Cop_tSNE = cor(as.vector(D),as.vector(D_tSNE))
+Cop_UMAP = cor(as.vector(D),as.vector(D_UMAP))
+Cop = c(Cop_SRCA,Cop_SPCA,Cop_PCA,Cop_LLE,Cop_tSNE,Cop_UMAP)
+save(Cop, file = "Cop_Sphere.rda")
+```
+
+
+
+## GEM
+```{r cars}
+library(dimRed)
+library(coRanking)
+library(rdist)
+setwd("~/Documents/GitHub/SPCA/code_method_Final/SRCA/GEM")
+data <- read.csv('GEM.csv',header = FALSE)
+output_PCA = read.csv('GEM_output_PCA.csv',header = FALSE)
+output_SRCA = read.csv('GEM_output_SRCA.csv',header = FALSE)
+output_SPCA = read.csv('GEM_output_SPCA.csv',header = FALSE)
+output_LLE = read.csv('GEM_output_LLE.csv',header = FALSE)
+output_tSNE = read.csv('GEM_output_tSNE.csv',header = FALSE)
+output_UMAP = read.csv('GEM_output_UMAP.csv',header = FALSE)
+
+
+D = pdist(data, metric = "euclidean", p = 2)
+D_SRCA = pdist(output_SRCA, metric = "euclidean", p = 2)
+D_SPCA = pdist(output_SPCA, metric = "euclidean", p = 2)
+D_PCA = pdist(output_PCA, metric = "euclidean", p = 2)
+D_LLE = pdist(output_LLE, metric = "euclidean", p = 2)
+D_tSNE = pdist(output_tSNE, metric = "euclidean", p = 2)
+D_UMAP = pdist(output_UMAP, metric = "euclidean", p = 2)
+
+
+result_SRCA = coranking( data, output_SRCA, input_Xi = "data", input_X = "data", use = "C" )
+result_SPCA = coranking( data, output_SPCA, input_Xi = "data", input_X = "data", use = "C" )
+result_PCA = coranking( data, output_PCA, input_Xi = "data", input_X = "data", use = "C" )
+result_LLE = coranking( data, output_LLE, input_Xi = "data", input_X = "data", use = "C" )
+result_tSNE = coranking( data, output_tSNE, input_Xi = "data", input_X = "data", use = "C" )
+result_UMAP = coranking( data, output_UMAP, input_Xi = "data", input_X = "data", use = "C" )
+
+
+qnx_SRCA = coRanking:::Q_NX(result_SRCA)
+qnx_SPCA = coRanking:::Q_NX(result_SPCA)
+qnx_PCA = coRanking:::Q_NX(result_PCA)
+qnx_LLE = coRanking:::Q_NX(result_LLE)
+qnx_tSNE = coRanking:::Q_NX(result_tSNE)
+qnx_UMAP = coRanking:::Q_NX(result_UMAP)
+
+
+
+lcmc_SRCA = LCMC(result_SRCA)
+lcmc_SPCA = LCMC(result_SPCA)
+lcmc_PCA = LCMC(result_PCA)
+lcmc_LLE = LCMC(result_LLE)
+lcmc_tSNE = LCMC(result_tSNE)
+lcmc_UMAP = LCMC(result_UMAP)
+
+Kmax_SRCA <- which.max(lcmc_SRCA)
+Kmax_SPCA <- which.max(lcmc_SPCA)
+Kmax_PCA <- which.max(lcmc_PCA)
+Kmax_LLE <- which.max(lcmc_LLE)
+Kmax_tSNE <- which.max(lcmc_tSNE)
+Kmax_UMAP <- which.max(lcmc_UMAP)
+
+RNX_SRCA = coRanking:::R_NX(result_SRCA)
+RNX_SPCA = coRanking:::R_NX(result_SPCA)
+RNX_PCA = coRanking:::R_NX(result_PCA)
+RNX_LLE = coRanking:::R_NX(result_LLE)
+RNX_tSNE = coRanking:::R_NX(result_tSNE)
+RNX_UMAP = coRanking:::R_NX(result_UMAP)
+
+AUC_SRCA = AUC_ln_K(RNX_SRCA)
+AUC_SPCA = AUC_ln_K(RNX_SPCA)
+AUC_PCA = AUC_ln_K(RNX_PCA)
+AUC_LLE = AUC_ln_K(RNX_LLE)
+AUC_tSNE = AUC_ln_K(RNX_tSNE)
+AUC_UMAP = AUC_ln_K(RNX_UMAP)
+
+AUCs = c(AUC_SRCA,AUC_SPCA,AUC_PCA,AUC_LLE,AUC_tSNE,AUC_UMAP)
+save(AUCs, file = "AUC_GEM.rda")
+ 
+AUC_SRCA_uw = mean(RNX_SRCA)
+AUC_SPCA_uw = mean(RNX_SPCA)
+AUC_PCA_uw = mean(RNX_PCA)
+AUC_LLE_uw = mean(RNX_LLE)
+AUC_tSNE_uw = mean(RNX_tSNE)
+AUC_UMAP_uw = mean(RNX_UMAP)
+
+AUCs_uw = c(AUC_SRCA_uw,AUC_SPCA_uw,AUC_PCA_uw,AUC_LLE_uw,AUC_tSNE_uw,AUC_UMAP_uw)
+save(AUCs_uw, file = "AUC_GEM_uw.rda")
+
+
+png(filename="C_GEM.png")
+old.par <- par(mfrow=c(2, 3))
+imageplot(result_SRCA,lwd = 2, bty = "n", main = "SRCA", xlab = expression(R), ylab = expression(Ro), axes = FALSE, legend = FALSE)
+imageplot(result_SPCA,lwd = 2, bty = "n", main = "SPCA", xlab = expression(R), ylab = expression(Ro), axes = FALSE, legend = FALSE)
+imageplot(result_PCA,lwd = 2, bty = "n", main = "PCA", xlab = expression(R), ylab = expression(Ro), axes = FALSE, legend = FALSE)
+imageplot(result_LLE,lwd = 2, bty = "n", main = "LLE", xlab = expression(R), ylab = expression(Ro), axes = FALSE, legend = FALSE)
+imageplot(result_tSNE,lwd = 2, bty = "n", main = "tSNE", xlab = expression(R), ylab = expression(Ro), axes = FALSE, legend = FALSE)
+imageplot(result_UMAP,lwd = 2, bty = "n", main = "UMAP", xlab = expression(R), ylab = expression(Ro),  axes = FALSE, legend = FALSE)
+par(old.par)
+dev.off()
+
+
+png(filename="QNX_GEM.png")
+yrange <- range(c(qnx_SRCA,qnx_SPCA,qnx_PCA,qnx_LLE,qnx_tSNE,qnx_UMAP))
+plot(qnx_SRCA, xlab = "K", ylab = expression(Q[NX]), type = "l", ylim = yrange, col = 1)
+abline(v = Kmax_SRCA, col = 1, lty = 2)
+text(Kmax_SRCA, mean(yrange) + 0.3, expression(K[SRCA]), col = 1, pos = 4)
+
+lines(qnx_SPCA, main = "SPCA", xlab = "K", ylab = expression(Q[NX]), ylim = 0:1, col = 2)
+abline(v = Kmax_SPCA, col = 2, lty = 2)
+text(Kmax_SPCA, mean(yrange) + 0.2, expression(K[SPCA]), col = 2, pos = 4)
+
+lines(qnx_PCA, main = "PCA", xlab = "K", ylab = expression(Q[NX]), ylim = 0:1, col = 3)
+abline(v = Kmax_PCA, col = 3, lty = 2)
+text(Kmax_PCA, mean(yrange) + 0.1, expression(K[PCA]), col = 3, pos = 4)
+
+lines(qnx_LLE, main = "LLE", xlab = "K", ylab = expression(Q[NX]), ylim = 0:1, col = 4)
+abline(v = Kmax_LLE, col = 4, lty = 2)
+text(Kmax_LLE, mean(yrange) , expression(K[LLE]), col = 4, pos = 4)
+
+lines(qnx_tSNE, main = "tSNE", xlab = "K", ylab = expression(Q[NX]), ylim = 0:1, col = 5)
+abline(v = Kmax_tSNE, col = 5, lty = 2)
+text(Kmax_tSNE, mean(yrange) - 0.1, expression(K[tSNE]), col = 5, pos = 4)
+
+lines(qnx_UMAP, main = "UMAP", xlab = "K", ylab = expression(Q[NX]), ylim = 0:1, col = 6)
+abline(v = Kmax_UMAP, col = 6, lty = 2)
+text(Kmax_UMAP, mean(yrange) - 0.2, expression(K[UMAP]), col = 6, pos = 4)
+legend("bottomright", legend = c("SRCA", "SPCA", "PCA", "LLE", "tSNE", "UMAP"), lty = 1, col = 1:6)
+title("Q_NX",line = -1, outer = TRUE)
+dev.off()
+
+
+
+
+png(filename="LCMC_GEM.png")
+yrange <- range(c(lcmc_SRCA,lcmc_SPCA,lcmc_PCA,lcmc_LLE,lcmc_tSNE,lcmc_UMAP))
+plot(lcmc_SRCA, xlab = "K", ylab = expression(LCMC), type = "l", ylim = yrange, col = 1)
+lines(lcmc_SPCA, main = "SPCA", xlab = "K", ylab = expression(LCMC), ylim = 0:1, col = 2)
+lines(lcmc_PCA, main = "PCA", xlab = "K", ylab = expression(LCMC), ylim = 0:1, col = 3)
+lines(lcmc_LLE, main = "LLE", xlab = "K", ylab = expression(LCMC), ylim = 0:1, col = 4)
+lines(lcmc_tSNE, main = "tSNE", xlab = "K", ylab = expression(LCMC), ylim = 0:1, col = 5)
+lines(lcmc_UMAP, main = "UMAP", xlab = "K", ylab = expression(LCMC), ylim = 0:1, col = 6)
+legend("bottomright", legend = c("SRCA", "SPCA", "PCA", "LLE", "tSNE", "UMAP"), lty = 1, col = 1:6)
+title("LCMC_NX",line = -1, outer = TRUE)
+dev.off()
+
+
+png(filename="RNX_GEM.png")
+yrange <- range(c(RNX_SRCA,RNX_SPCA,RNX_PCA,RNX_LLE,RNX_tSNE,RNX_UMAP))
+plot(RNX_SRCA, xlab = "K", ylab = expression(LCMC), type = "l", ylim = yrange, col = 1)
+lines(RNX_SPCA, main = "SPCA", xlab = "K", ylab = expression(LCMC), ylim = 0:1, col = 2)
+lines(RNX_PCA, main = "PCA", xlab = "K", ylab = expression(LCMC), ylim = 0:1, col = 3)
+lines(RNX_LLE, main = "LLE", xlab = "K", ylab = expression(LCMC), ylim = 0:1, col = 4)
+lines(RNX_tSNE, main = "tSNE", xlab = "K", ylab = expression(LCMC), ylim = 0:1, col = 5)
+lines(RNX_UMAP, main = "UMAP", xlab = "K", ylab = expression(LCMC), ylim = 0:1, col = 6)
+legend("bottomright", legend = c("SRCA", "SPCA", "PCA", "LLE", "tSNE", "UMAP"), lty = 1, col = 1:6)
+title("R_NX",line = -1, outer = TRUE)
+dev.off()
+
+
+
+
+Q_loc = c(Q_local(qnx_SRCA,Kmax_SRCA),Q_local(qnx_SPCA,Kmax_SPCA),Q_local(qnx_PCA,Kmax_PCA),Q_local(qnx_LLE,Kmax_LLE),Q_local(qnx_tSNE,Kmax_tSNE),Q_local(qnx_UMAP,Kmax_UMAP))
+Q_glob = c(Q_global(qnx_SRCA,Kmax_SRCA),Q_global(qnx_SPCA,Kmax_SPCA),Q_global(qnx_PCA,Kmax_PCA),Q_global(qnx_LLE,Kmax_LLE),Q_global(qnx_tSNE,Kmax_tSNE),Q_global(qnx_UMAP,Kmax_UMAP))
+save(Q_loc, file = "Q_local_GEM.rda")
+save(Q_glob, file = "Q_global_GEM.rda")
+
+Cop_SRCA = cor(as.vector(D),as.vector(D_SRCA))
+Cop_SPCA = cor(as.vector(D),as.vector(D_SPCA))
+Cop_PCA = cor(as.vector(D),as.vector(D_PCA))
+Cop_LLE = cor(as.vector(D),as.vector(D_LLE))
+Cop_tSNE = cor(as.vector(D),as.vector(D_tSNE))
+Cop_UMAP = cor(as.vector(D),as.vector(D_UMAP))
+Cop = c(Cop_SRCA,Cop_SPCA,Cop_PCA,Cop_LLE,Cop_tSNE,Cop_UMAP)
+save(Cop, file = "Cop_GEM.rda")
+```
+
+
+
+
+
+## Alon_lambda
+```{r cars}
+library(dimRed)
+library(coRanking)
+library(rdist)
+setwd("~/Documents/GitHub/SPCA/code_method_Final/SRCA/Alon")
+
+filename = 'Alon_output_SRCA_1e0-5.csv'
+data <- read.csv('alon.csv',header = TRUE)
+data = data[,2:2001]
+output_SRCA = read.csv(filename,header = FALSE)
+
+D = pdist(data, metric = "euclidean", p = 2)
+D_SRCA = pdist(output_SRCA, metric = "euclidean", p = 2)
+
+
+result_SRCA = coranking( data, output_SRCA, input_Xi = "data", input_X = "data", use = "C" )
+
+qnx_SRCA = coRanking:::Q_NX(result_SRCA)
+
+lcmc_SRCA = LCMC(result_SRCA)
+
+Kmax_SRCA <- which.max(lcmc_SRCA)
+
+RNX_SRCA = coRanking:::R_NX(result_SRCA)
+
+AUC_SRCA = AUC_ln_K(RNX_SRCA)
+
+ 
+AUC_SRCA_uw = mean(RNX_SRCA)
+
+ 
+Q_loc_SRCA = Q_local(qnx_SRCA,Kmax_SRCA)
+Q_glob_SRCA = Q_global(qnx_SRCA,Kmax_SRCA)
+
+Cop_SRCA = cor(as.vector(D),as.vector(D_SRCA))
+
+```
