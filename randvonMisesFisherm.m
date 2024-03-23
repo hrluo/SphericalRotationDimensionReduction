@@ -131,4 +131,3 @@ A = a*c' - c*a' ;
 
 rot = eye(d) + sin(alpha)*A + (cos(alpha) - 1)*(a*a' +c*c');
 end
-

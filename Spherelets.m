@@ -34,4 +34,3 @@ if n>d+1   % if there are enough samples, fit the data by a sphere or a hyperpla
 
 end
 return
-

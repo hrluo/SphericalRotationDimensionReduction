@@ -20,6 +20,7 @@ for k = 1:n
 end
 
 %%%%%SRCA
+[output_SRCA,rotate_SRCA,opt_ind,center_SRCA,radius_SRCA, reduced_SRCA] = SRCA(Y,retain_d+1,'ALG','est',true,0,'PCA')
 W_matrix = eye(d);
 [output_SRCA,rotate_SRCA,opt_ind,center_SRCA,radius_SRCA, reduced_SRCA] = SRCA(Y,retain_d+1,'ALG',W_matrix,true,0,'PCA')
 %[output_SRCA,rotate_SRCA,opt_ind,center_SRCA,radius_SRCA, reduced_SRCA] = SRCA(Y,retain_d+1,'ALG',W_matrix,false,0,'PCA')

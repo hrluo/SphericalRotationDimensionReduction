@@ -1,7 +1,11 @@
 function LOSS = lossFunction_I(data_matrix,ind_vec,cov_mat,lambda,center,radius)
+    global funcCallCount;
+    funcCallCount = funcCallCount + 1;%This must be declared outside as global variable to count times of function evaluations.
     LOSS = 0;
     data_dim = size(data_matrix);
     id_I = diag(ind_vec);
+    %disp(ind_vec)
+    %disp(size(ind_vec));
     %disp(cov_mat)
     %disp(size(id_I))
     %%disp(data_dim)

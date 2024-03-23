@@ -1,7 +1,7 @@
-function [output_matrix,rotate_matrix,opt_ind,center,radius,reduced_matrix] = SRCA(data_matrix,retain_dim,loss_type,W_matrix,enable_norm,lambda,rotationMethod,optim_steps)
+function [output_matrix,rotate_matrix,opt_ind,center,radius,reduced_matrix,n_func_eval] = hl_SRCA(data_matrix,retain_dim,loss_type,W_matrix,enable_norm,lambda,rotationMethod,tolerance)
   %Function: SRCA-joint, based on Didong's suggestion of one-step method.
-  %Hengrui Luo and Didong Li, Aug 1st, 2021.
-  %This scipt implements to SRCA method.
+  %Hengrui Luo, Dec 28th, 2023. 
+  %This scipt corresponds to method 4 described in Sec 2.2.
   %Functionality: Find the optimal lower-dimensional sphere (specified by retain_dim) that represents the dataset in R^d (represented by n*d matrix data_matrix).
   %Input: data_matrix -- An n by d matrix representing n datapoints (rows) in R^d (columns)
   %       retain_dim -- It must be less or equal to d, the dimension of the reduced dataset.
@@ -57,7 +57,7 @@ function [output_matrix,rotate_matrix,opt_ind,center,radius,reduced_matrix] = SR
     if retain_dim>data_dim(2)
         error('ERROR: The retained dimension cannot be greater than the dimension of the original data matrix.')
     end
-    if nargin<8
+    if nargin<9
         optim_steps = 500000;
     end
     if ischar(W_matrix)
@@ -94,30 +94,51 @@ function [output_matrix,rotate_matrix,opt_ind,center,radius,reduced_matrix] = SR
     %Step3: Binary search for best axes (dimension reduction)  %
     % Currently, this step only searches the optimal indices \mathcal{I}.
     if L1_NORM == false
-        fprintf('SRCA-joint Method: Binary search start.\n')
-        bin_list = dec2bin(2^d-1:-1:0)-'0';
+        fprintf('SRCA-joint Method: Branch-and-bound search start.\n')
+        d = size(X_rotated, 2); % Number of dimensions
+        queue = {zeros(1, d)}; % Start with an empty selection
         min_val = Inf;
-        opt_ind = bin_list(1,:);
-        for k = 1:2^d
-            if sum(bin_list(k,:))~=retain_dim
-                continue
-            end
-            disp(k)
-            %Estimate center and radius jointly
-            %lossfun = @(x)ALG_LOSS(x,data_matrix,W_matrix);
-            %lossfun = @(x)GEO_LOSS(x,data_matrix,W_matrix);
-            lossfun = @(x)lossFunction_I(X_rotated,bin_list(k,:),W_matrix,lambda,x(1:end-1),x(end));
-            [center_candidate,radius_candidate] = EstimateSphere(X_rotated,lossfun);
-            cur_val = lossFunction_I(X_rotated,bin_list(k,:),W_matrix,lambda,center_candidate,radius_candidate);
-            if cur_val<min_val
-                min_val = cur_val;
-                cur_center = center_candidate;
-                cur_radius = radius_candidate;
-                opt_ind = bin_list(k,:);
+        opt_ind = zeros(1, d);
+        %n_func_eval = 0;
+        % tolerance = 1; % Assuming tolerance is defined somewhere in your code
+        while ~isempty(queue)
+            current_selection = queue{1};
+            queue(1) = []; % Remove the first element from the queue
+        
+            % Count the number of dimensions already decided
+            decided_count = sum(current_selection ~= 0);
+        
+            % Evaluate only if the number of selected dimensions matches retain_dim
+            if decided_count == d && sum(current_selection == 1) == retain_dim
+                selected_X = X_rotated;%(:, current_selection == 1);
+                %disp('selected_X shape')
+                %disp(size(selected_X))
+                lossfun = @(x) lossFunction_I(selected_X, current_selection, W_matrix, lambda, x(1:end-1), x(end));
+                [center_candidate, radius_candidate] = EstimateSphere(selected_X, lossfun);
+                %n_func_eval = n_func_eval + 1;
+                cur_val = lossFunction_I(selected_X, current_selection, W_matrix, lambda, center_candidate, radius_candidate);
+                %n_func_eval = n_func_eval + 1;
+                if cur_val < min_val
+                    min_val = cur_val;
+                    cur_center = center_candidate;
+                    cur_radius = radius_candidate;
+                    opt_ind = current_selection;
+                end
+            elseif decided_count < d
+                % Create branches for the next dimension
+                next_dim = find(current_selection == 0, 1); % Find the next dimension to decide
+                include_branch = current_selection;
+                include_branch(next_dim) = 1; % Include the dimension
+                queue{end + 1} = include_branch;
             end
         end
-        re_estimate=false;
+        
+        fprintf('Optimal indices: %s\n', mat2str(opt_ind == 1));
+        fprintf('Minimum loss: %f\n', min_val);
+        %fprintf('Number of evaluations: %d\n', n_func_eval);
+        re_estimate=true;
     else
+        %n_evals = 0;
         fprintf('SRCA-joint Method: L1 optimization start.\n')
         fprintf('SRCA-joint Method: L1 only supports identity W matrix at the moment.\n')
         %if sum(isnan(W_matrix))>0
@@ -168,8 +189,6 @@ function [output_matrix,rotate_matrix,opt_ind,center,radius,reduced_matrix] = SR
     %Or we can set a threshold 0.01*1/d can be increase or reduced; especially in L1-enabled mode.
     chosen_mult = zeros(1,d_rotated);
     chosen_mult(chosen_index) = 1;
-    %fprintf('chosen indices')
-    %chosen_mult
     %                                                          %
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
     
@@ -191,9 +210,6 @@ function [output_matrix,rotate_matrix,opt_ind,center,radius,reduced_matrix] = SR
         center = cur_center.*chosen_mult*inv(rotate_matrix)+empirical_mean;
         %center = cur_center*inv(rotate_matrix)+empirical_mean;
         radius = cur_radius;
-    %fprintf('radius and center')
-    %radius
-    %center
     %                                                          %
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
@@ -215,7 +231,6 @@ function [output_matrix,rotate_matrix,opt_ind,center,radius,reduced_matrix] = SR
         output_matrix = augument_matrix*inv(rotate_matrix); 
         output_matrix = output_matrix + empirical_mean;
         %disp(chosen_index)
-        
         opt_ind = chosen_mult;
         %lossfun = @(x)ALG_LOSS(x,output_matrix,W_matrix);
         %[c1,r1] = EstimateSphere(output_matrix,lossfun)
