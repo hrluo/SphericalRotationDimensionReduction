@@ -4,8 +4,8 @@
 # SphericalRotationDimensionReduction (SRCA)
 
 **Content**
-This is the code repository for the research publication "Spherical Rotation Dimension Reduction with Geometric Loss Functions (SRCA)" by [Didong Li]() and [Hengrui Luo](https://hrluo.github.io/SphericalRotationDimensionReduction). 
-The manuscript of this paper can be accessed at https://arxiv.org/abs/2204.10975. 
+This is the code repository for the research publication "Spherical Rotation Dimension Reduction with Geometric Loss Functions (SRCA)" by [Didong Li](), [Jeremy E. Purvis](https://www.med.unc.edu/genetics/purvislab/) and [Hengrui Luo](https://hrluo.github.io/SphericalRotationDimensionReduction). 
+The manuscript of this paper can be accessed at https://www.jmlr.org/papers/v25/23-0547.html or https://arxiv.org/abs/2204.10975. 
 
  - The MATLAB code we store in root folder contains a full pipeline for two methods:
  	- Spherical rotation (SRCA) dimension reduction.
@@ -24,13 +24,14 @@ we want to incorporate geometrical information in the task of dimension reductio
 We provided MATLAB code for reproducible and experimental purposes under [LICENSE](https://github.com/hrluo/SphericalRotationDimensionReduction).
 Please cite our paper using following BibTeX item:
 
-    @article{luo_li_2022spherical,
-	          title={Spherical Rotation Dimension Reduction with Geometric Loss Functions}, 
-	          author={Hengrui Luo and Didong Li},
-	          year={2022},
-	          eprint={arXiv:2204.10975},
-	          archivePrefix={arXiv},
-	          primaryClass={stat.ML}
-    }
+	@article{luo2024spherical,
+	  title={Spherical rotation dimension reduction with geometric loss functions},
+	  author={Luo, Hengrui and Purvis, Jeremy E and Li, Didong},
+	  journal={Journal of Machine Learning Research},
+	  volume={25},
+	  number={175},
+	  pages={1--55},
+	  year={2024}
+	}
 
 Thank you again for the interest and please reach out if you have further questions.
